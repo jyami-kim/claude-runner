@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SessionListView: View {
     @ObservedObject var store: StateStore
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -49,7 +48,7 @@ struct SessionListView: View {
 
                 Button(action: quitApp) {
                     HStack(spacing: 2) {
-                        Text("⌘")
+                        Text("\u{2318}")
                             .font(.system(size: 10))
                         Text("Quit")
                             .font(.system(size: 11))
@@ -57,11 +56,12 @@ struct SessionListView: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
+                .keyboardShortcut("q", modifiers: .command)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
         }
-        .frame(width: 260)
+        .frame(width: DesignTokens.popoverWidth)
     }
 
     private func openSettings() {
@@ -78,17 +78,19 @@ struct SessionListView: View {
 struct SessionRow: View {
     let session: SessionEntry
 
+    @State private var isHovered = false
     @State private var currentTime = Date()
     private let timer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.dotTextGap) {
             Circle()
-                .fill(stateColor)
-                .frame(width: 8, height: 8)
+                .fill(DesignTokens.color(for: session.state))
+                .frame(width: DesignTokens.dotSize, height: DesignTokens.dotSize)
 
             Text(session.projectName)
                 .font(.system(size: 12, weight: .medium))
+                .foregroundColor(.primary)
                 .lineLimit(1)
                 .truncationMode(.middle)
 
@@ -100,8 +102,10 @@ struct SessionRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
+        .background(isHovered ? Color.primary.opacity(0.06) : Color.clear)
         .contentShape(Rectangle())
         .onHover { hovering in
+            isHovered = hovering
             if hovering {
                 NSCursor.pointingHand.push()
             } else {
@@ -111,14 +115,7 @@ struct SessionRow: View {
         .onReceive(timer) { _ in
             currentTime = Date()
         }
-    }
-
-    private var stateColor: Color {
-        switch session.state {
-        case .active: return Color(red: 0.3, green: 0.85, blue: 0.4)
-        case .waiting: return Color(red: 1.0, green: 0.8, blue: 0.0)
-        case .permission: return Color(red: 1.0, green: 0.27, blue: 0.23)
-        }
+        .accessibilityLabel("\(session.state.rawValue): \(session.projectName)")
     }
 
     private var elapsedText: String {

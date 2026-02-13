@@ -16,9 +16,13 @@
     <string>APPL</string>
     <key>CFBundleExecutable</key>
     <string>claude-runner</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
     <true/>
 </dict>
 </plist>

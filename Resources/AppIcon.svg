@@ -1,0 +1,82 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="squircle-clip">
+      <path d="M 110 0 L 402 0 C 470 0 512 42 512 110 L 512 402 C 512 470 470 512 402 512 L 110 512 C 42 512 0 470 0 402 L 0 110 C 0 42 42 0 110 0 Z" />
+    </clipPath>
+    <radialGradient id="bg-radial">
+      <stop offset="0%" stop-color="#141416" />
+      <stop offset="100%" stop-color="#0D0D0F" />
+    </radialGradient>
+
+    <filter id="neon-red" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="20" result="blur1"/>
+      <feGaussianBlur stdDeviation="10" result="blur2"/>
+      <feGaussianBlur stdDeviation="5" result="blur3"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur3"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="neon-yellow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="20" result="blur1"/>
+      <feGaussianBlur stdDeviation="10" result="blur2"/>
+      <feGaussianBlur stdDeviation="5" result="blur3"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur3"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="neon-green" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="20" result="blur1"/>
+      <feGaussianBlur stdDeviation="10" result="blur2"/>
+      <feGaussianBlur stdDeviation="5" result="blur3"/>
+      <feMerge>
+        <feMergeNode in="blur1"/>
+        <feMergeNode in="blur2"/>
+        <feMergeNode in="blur3"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <radialGradient id="neon-red-grad">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#FF7A6E" />
+      <stop offset="100%" stop-color="#FF453A" />
+    </radialGradient>
+    <radialGradient id="neon-yellow-grad">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#FFE870" />
+      <stop offset="100%" stop-color="#FFD60A" />
+    </radialGradient>
+    <radialGradient id="neon-green-grad">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#6FE595" />
+      <stop offset="100%" stop-color="#30D158" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bg-radial)" clip-path="url(#squircle-clip)" />
+
+  <!-- Red neon dot -->
+  <g filter="url(#neon-red)">
+    <circle cx="166" cy="256" r="25" fill="url(#neon-red-grad)" opacity="0.25" />
+    <circle cx="166" cy="256" r="25" fill="url(#neon-red-grad)" />
+  </g>
+
+  <!-- Yellow neon dot -->
+  <g filter="url(#neon-yellow)">
+    <circle cx="256" cy="256" r="25" fill="url(#neon-yellow-grad)" opacity="0.25" />
+    <circle cx="256" cy="256" r="25" fill="url(#neon-yellow-grad)" />
+  </g>
+
+  <!-- Green neon dot -->
+  <g filter="url(#neon-green)">
+    <circle cx="346" cy="256" r="25" fill="url(#neon-green-grad)" opacity="0.25" />
+    <circle cx="346" cy="256" r="25" fill="url(#neon-green-grad)" />
+  </g>
+</svg>

@@ -90,7 +90,7 @@ final class StateStore: ObservableObject {
 
     private let sessionsDirectory: URL
     private let decoder: JSONDecoder
-    private let staleThreshold: TimeInterval = 3600 // 1 hour
+    private let staleThreshold: TimeInterval = 600 // 10 minutes
 
     init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
