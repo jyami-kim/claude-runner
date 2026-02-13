@@ -8,12 +8,6 @@ set -euo pipefail
 SESSIONS_DIR="$HOME/Library/Application Support/claude-runner/sessions"
 mkdir -p "$SESSIONS_DIR"
 
-# Debug logging (temporary - remove after diagnosis)
-DEBUG_LOG="$HOME/Library/Application Support/claude-runner/debug.log"
-log_debug() {
-    echo "$(date '+%H:%M:%S') EVENT=$HOOK_EVENT SID=${SESSION_ID:-?} STATE=${STATE:-?}" >> "$DEBUG_LOG"
-}
-
 # Read JSON from stdin
 INPUT=$(cat)
 
@@ -85,6 +79,17 @@ STARTED_AT="${STARTED_AT:-$TIMESTAMP}"
 case "$HOOK_EVENT" in
     SessionStart)
         STATE="waiting"
+        # Clean up previous session on same TTY (handles resume without SessionEnd)
+        if [ -n "$SESSION_TTY" ]; then
+            for f in "$SESSIONS_DIR"/*.json; do
+                [ -f "$f" ] || continue
+                OLD_SID=$(jq -r '.session_id // empty' "$f" 2>/dev/null)
+                OLD_TTY=$(jq -r '.tty // empty' "$f" 2>/dev/null)
+                if [ "$OLD_TTY" = "$SESSION_TTY" ] && [ "$OLD_SID" != "$SESSION_ID" ]; then
+                    rm -f "$f"
+                fi
+            done
+        fi
         ;;
     UserPromptSubmit)
         STATE="active"
@@ -166,9 +171,5 @@ jq -n \
     --arg started "$STARTED_AT" \
     '{"session_id":$sid,"cwd":$cwd,"state":$state,"updated_at":$ts,"started_at":$started,"terminal_bundle_id":$bid,"tty":$tty}' > "$TEMP_FILE"
 mv "$TEMP_FILE" "$SESSION_FILE"
-
-# Debug: log state transition + verify file was written
-FILE_STATE=$(jq -r '.state // "READ_FAIL"' "$SESSION_FILE" 2>/dev/null)
-echo "$(date '+%H:%M:%S') EVENT=$HOOK_EVENT SID=${SESSION_ID:-?} STATE=$STATE FILE=$FILE_STATE" >> "$DEBUG_LOG"
 
 exit 0
