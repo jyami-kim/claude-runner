@@ -28,5 +28,5 @@ final class AppSettings: ObservableObject {
     @AppStorage("launchAtLogin") var launchAtLogin = false
     @AppStorage("iconStyle") var iconStyle: IconStyle = .trafficLight
     @AppStorage("sessionDisplayFormat") var sessionDisplayFormat: SessionDisplayFormat = .fullPath
-    @AppStorage("staleTimeout") var staleTimeout: Int = 10 // minutes
+    @AppStorage("staleTimeoutSeconds") var staleTimeoutSeconds: Int = 600 // seconds (session file deletion, user-configurable)
 }

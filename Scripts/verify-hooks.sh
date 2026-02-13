@@ -25,8 +25,8 @@ echo "설정 파일: $SETTINGS_FILE"
 echo ""
 
 # Required hook events
-REQUIRED_EVENTS=("SessionStart" "UserPromptSubmit" "PreToolUse" "Stop" "SessionEnd")
-REQUIRED_NOTIFICATIONS=("permission_prompt" "idle_prompt")
+REQUIRED_EVENTS=("SessionStart" "UserPromptSubmit" "PreToolUse" "PostToolUse" "PostToolUseFailure" "Stop" "SessionEnd")
+REQUIRED_NOTIFICATIONS=("permission_prompt" "idle_prompt" "elicitation_dialog")
 
 PASS=0
 FAIL=0
@@ -73,14 +73,17 @@ if [ -f "$INSTALLED_HOOK" ]; then
         FAIL=$((FAIL + 1))
     fi
 
-    # Check if installed script handles PreToolUse
-    if grep -q "PreToolUse" "$INSTALLED_HOOK"; then
-        echo -e "  ${GREEN}[OK]${NC}   PreToolUse 핸들러 포함"
-        PASS=$((PASS + 1))
-    else
-        echo -e "  ${RED}[FAIL]${NC} PreToolUse 핸들러 없음 - hook 스크립트 재설치 필요"
-        FAIL=$((FAIL + 1))
-    fi
+    # Check if installed script handles all required events
+    REQUIRED_HANDLERS=("PreToolUse" "PostToolUseFailure" "elicitation_dialog")
+    for handler in "${REQUIRED_HANDLERS[@]}"; do
+        if grep -q "$handler" "$INSTALLED_HOOK"; then
+            echo -e "  ${GREEN}[OK]${NC}   $handler 핸들러 포함"
+            PASS=$((PASS + 1))
+        else
+            echo -e "  ${RED}[FAIL]${NC} $handler 핸들러 없음 - hook 스크립트 재설치 필요"
+            FAIL=$((FAIL + 1))
+        fi
+    done
 else
     echo -e "  ${RED}[FAIL]${NC} Hook 스크립트 미설치: $INSTALLED_HOOK"
     FAIL=$((FAIL + 1))

@@ -120,10 +120,11 @@ final class StateStoreTests: XCTestCase {
 
     // MARK: - Stale Pruning
 
-    func testStalePruning() {
-        writeSession(id: "stale", state: "active",
+    func testStalePruningWaitingSession() {
+        // Only waiting sessions are pruned when stale
+        writeSession(id: "stale", state: "waiting",
                      updatedAt: Date().addingTimeInterval(-1200)) // 20 min old
-        writeSession(id: "fresh", state: "active")
+        writeSession(id: "fresh", state: "waiting")
 
         let store = StateStore(sessionsDirectory: tempDir, staleThreshold: 600, autoReload: false)
         store.reload()
@@ -137,8 +138,36 @@ final class StateStoreTests: XCTestCase {
             atPath: tempDir.appendingPathComponent("stale.json").path))
     }
 
+    func testStalePruningPreservesActiveSession() {
+        // Active sessions are NOT pruned even if old
+        writeSession(id: "old-active", state: "active",
+                     updatedAt: Date().addingTimeInterval(-1200)) // 20 min old
+
+        let store = StateStore(sessionsDirectory: tempDir, staleThreshold: 600, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        XCTAssertEqual(store.sessions.count, 1)
+        XCTAssertEqual(store.sessions.first?.sessionId, "old-active")
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: tempDir.appendingPathComponent("old-active.json").path))
+    }
+
+    func testStalePruningPreservesPermissionSession() {
+        // Permission sessions are NOT pruned even if old
+        writeSession(id: "old-perm", state: "permission",
+                     updatedAt: Date().addingTimeInterval(-1200)) // 20 min old
+
+        let store = StateStore(sessionsDirectory: tempDir, staleThreshold: 600, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        XCTAssertEqual(store.sessions.count, 1)
+        XCTAssertEqual(store.sessions.first?.sessionId, "old-perm")
+    }
+
     func testFreshSessionNotPruned() {
-        writeSession(id: "fresh", state: "active",
+        writeSession(id: "fresh", state: "waiting",
                      updatedAt: Date().addingTimeInterval(-300)) // 5 min old
 
         let store = StateStore(sessionsDirectory: tempDir, staleThreshold: 600, autoReload: false)

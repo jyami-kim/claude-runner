@@ -55,7 +55,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertNil(defaults.object(forKey: "launchAtLogin"))
         XCTAssertNil(defaults.object(forKey: "iconStyle"))
         XCTAssertNil(defaults.object(forKey: "sessionDisplayFormat"))
-        XCTAssertNil(defaults.object(forKey: "staleTimeout"))
+        XCTAssertNil(defaults.object(forKey: "staleTimeoutSeconds"))
     }
 
     func testIconStylePersistence() {
@@ -85,7 +85,7 @@ final class AppSettingsTests: XCTestCase {
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
-        defaults.set(15, forKey: "staleTimeout")
-        XCTAssertEqual(defaults.integer(forKey: "staleTimeout"), 15)
+        defaults.set(15, forKey: "staleTimeoutSeconds")
+        XCTAssertEqual(defaults.integer(forKey: "staleTimeoutSeconds"), 15)
     }
 }

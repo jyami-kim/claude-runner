@@ -90,7 +90,39 @@ case "$HOOK_EVENT" in
         STATE="active"
         ;;
     PreToolUse)
+        # AskUserQuestion requires user response → treat as permission
+        TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
+        if [ "$TOOL_NAME" = "AskUserQuestion" ]; then
+            STATE="permission"
+        else
+            STATE="active"
+        fi
+        ;;
+    PermissionRequest)
+        # Only set RED for tools that actually require user approval
+        # Skip read-only tools that are typically auto-approved
+        TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
+        case "$TOOL_NAME" in
+            Read|Glob|Grep|LSP|WebSearch|WebFetch|TaskList|TaskGet)
+                exit 0
+                ;;
+            *)
+                STATE="permission"
+                ;;
+        esac
+        ;;
+    PostToolUse)
+        # Tool completed successfully → back to active (GREEN)
         STATE="active"
+        ;;
+    PostToolUseFailure)
+        # is_interrupt: true means user pressed ESC during tool execution
+        IS_INTERRUPT=$(echo "$INPUT" | jq -r '.is_interrupt // false')
+        if [ "$IS_INTERRUPT" = "true" ]; then
+            STATE="waiting"
+        else
+            STATE="active"
+        fi
         ;;
     Stop)
         STATE="waiting"
@@ -104,6 +136,9 @@ case "$HOOK_EVENT" in
                 ;;
             idle_prompt)
                 STATE="waiting"
+                ;;
+            elicitation_dialog)
+                STATE="permission"
                 ;;
             *)
                 exit 0
@@ -119,9 +154,6 @@ case "$HOOK_EVENT" in
         ;;
 esac
 
-# Debug: log every state transition
-log_debug
-
 # Atomic write: temp file then mv
 TEMP_FILE=$(mktemp "$SESSIONS_DIR/.tmp.XXXXXX")
 jq -n \
@@ -134,5 +166,9 @@ jq -n \
     --arg started "$STARTED_AT" \
     '{"session_id":$sid,"cwd":$cwd,"state":$state,"updated_at":$ts,"started_at":$started,"terminal_bundle_id":$bid,"tty":$tty}' > "$TEMP_FILE"
 mv "$TEMP_FILE" "$SESSION_FILE"
+
+# Debug: log state transition + verify file was written
+FILE_STATE=$(jq -r '.state // "READ_FAIL"' "$SESSION_FILE" 2>/dev/null)
+echo "$(date '+%H:%M:%S') EVENT=$HOOK_EVENT SID=${SESSION_ID:-?} STATE=$STATE FILE=$FILE_STATE" >> "$DEBUG_LOG"
 
 exit 0

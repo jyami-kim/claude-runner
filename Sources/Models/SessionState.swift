@@ -32,7 +32,7 @@ enum SessionState: String, Codable, Comparable {
 struct SessionEntry: Codable, Identifiable {
     let sessionId: String
     let cwd: String
-    let state: SessionState
+    var state: SessionState
     let updatedAt: Date
     let startedAt: Date?
     let terminalBundleId: String?
@@ -134,11 +134,12 @@ final class StateStore: ObservableObject {
     private let sessionsDirectory: URL
     private let decoder: JSONDecoder
     let staleThreshold: TimeInterval
+    private var stalenessTimer: Timer?
 
     init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         sessionsDirectory = appSupport.appendingPathComponent("claude-runner/sessions", isDirectory: true)
-        staleThreshold = TimeInterval(AppSettings.shared.staleTimeout * 60)
+        staleThreshold = TimeInterval(AppSettings.shared.staleTimeoutSeconds)
 
         decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -148,6 +149,9 @@ final class StateStore: ObservableObject {
 
         // Initial load
         reload()
+
+        // Periodic timer to re-evaluate staleness (catches ESC interrupts with no hook event)
+        startStalenessTimer()
     }
 
     /// Testable initializer with custom directory
@@ -182,8 +186,9 @@ final class StateStore: ObservableObject {
                 continue
             }
 
-            // Prune stale sessions
-            if now.timeIntervalSince(entry.updatedAt) > staleThreshold {
+            // Prune stale sessions (only waiting sessions; active/permission are preserved)
+            if entry.state == .waiting &&
+               now.timeIntervalSince(entry.updatedAt) > staleThreshold {
                 try? fm.removeItem(at: file)
                 continue
             }
@@ -209,6 +214,14 @@ final class StateStore: ObservableObject {
         DispatchQueue.main.async {
             self.sessions = loaded
             self.counts = newCounts
+        }
+    }
+
+    private func startStalenessTimer() {
+        DispatchQueue.main.async { [weak self] in
+            self?.stalenessTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+                self?.reload()
+            }
         }
     }
 }
