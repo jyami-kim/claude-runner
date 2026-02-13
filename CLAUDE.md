@@ -23,6 +23,7 @@ claude-runner/
 │   │   └── AppSettings.swift       # @AppStorage settings, IconStyle, SessionDisplayFormat enums
 │   ├── Views/
 │   │   ├── SessionListView.swift   # Popover content: session list + session row
+│   │   ├── SettingsView.swift      # Settings window UI (5 sections)
 │   │   └── StatusIcon.swift        # Menu bar icon updater
 │   ├── Services/
 │   │   ├── HookInstaller.swift     # Installs hook script to ~/.claude/
@@ -54,6 +55,7 @@ claude-runner/
 3. **StateStore** reads JSON files, prunes stale sessions, and publishes `sessions` + `counts`.
 4. **StatusIcon** renders the menu bar icon using `NSImage.icon(style:counts:)`.
 5. **SessionListView** displays the popover with session rows showing state dot, path, and elapsed time.
+6. **SettingsView** provides a settings window (NSWindow) with General, Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
 
 ## Build & Test
 
@@ -68,6 +70,7 @@ swift test
 - **Update this file:** When adding files, changing architecture, or modifying the project structure, update this CLAUDE.md.
 - **Doc comments:** New public APIs should have `///` documentation comments.
 - **Settings:** App settings are managed via `AppSettings` with `@AppStorage`. Icon style and display format are enum-based.
-- **Icon styles:** 4 styles available: Traffic Light, Single Dot, Compact Bar, Text Counter. All render at `DesignTokens.iconWidth x iconHeight`.
+- **Icon styles:** 4 styles available: Traffic Light, Pie Chart, Domino, Text Counter. All render at `DesignTokens.iconWidth x iconHeight`.
 - **Session display formats:** fullPath (`~/path/to/project`), directoryOnly (`project`), lastTwoDirs (`to/project`).
-- **Stale threshold:** Configurable via `AppSettings.staleTimeout` (minutes), used by `StateStore` to prune old sessions.
+- **Stale threshold:** Configurable via `AppSettings.staleTimeoutMinutes` (minutes), used by `StateStore` to prune old sessions.
+- **Notifications:** `notifyOnStateChange` setting controls whether state change notifications are shown.

@@ -97,56 +97,72 @@ final class TrafficLightTests: XCTestCase {
         XCTAssertEqual(image.size.height, DesignTokens.iconHeight)
     }
 
-    // MARK: - Single Dot Style
+    // MARK: - Pie Chart Style
 
-    func testSingleDotIdle() {
-        let image = NSImage.singleDot(counts: StateCounts())
+    func testPieChartIdle() {
+        let image = NSImage.pieChart(counts: StateCounts())
         XCTAssertNotNil(image)
-        XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
+        XCTAssertEqual(image.size.width, 20)
         XCTAssertEqual(image.size.height, DesignTokens.iconHeight)
         XCTAssertFalse(image.isTemplate)
     }
 
-    func testSingleDotWithSessions() {
+    func testPieChartWithSessions() {
         var counts = StateCounts()
         counts.activeCount = 3
         counts.permissionCount = 1
-        let image = NSImage.singleDot(counts: counts)
+        let image = NSImage.pieChart(counts: counts)
         XCTAssertNotNil(image)
-        XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
+        XCTAssertEqual(image.size.width, 20)
     }
 
-    func testIconDispatcherSingleDot() {
+    func testPieChartSingleState() {
+        var counts = StateCounts()
+        counts.waitingCount = 5
+        let image = NSImage.pieChart(counts: counts)
+        XCTAssertNotNil(image)
+        XCTAssertEqual(image.size.width, 20)
+    }
+
+    func testIconDispatcherPieChart() {
         var counts = StateCounts()
         counts.activeCount = 1
-        let image = NSImage.icon(style: .singleDot, counts: counts)
+        let image = NSImage.icon(style: .pieChart, counts: counts)
         XCTAssertNotNil(image)
     }
 
-    // MARK: - Compact Bar Style
+    // MARK: - Domino Style
 
-    func testCompactBarIdle() {
-        let image = NSImage.compactBar(counts: StateCounts())
+    func testDominoIdle() {
+        let image = NSImage.domino(counts: StateCounts())
         XCTAssertNotNil(image)
         XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
         XCTAssertEqual(image.size.height, DesignTokens.iconHeight)
         XCTAssertFalse(image.isTemplate)
     }
 
-    func testCompactBarWithSessions() {
+    func testDominoWithSessions() {
         var counts = StateCounts()
         counts.activeCount = 2
         counts.waitingCount = 3
         counts.permissionCount = 1
-        let image = NSImage.compactBar(counts: counts)
+        let image = NSImage.domino(counts: counts)
         XCTAssertNotNil(image)
         XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
     }
 
-    func testIconDispatcherCompactBar() {
+    func testDominoWithBadge() {
+        var counts = StateCounts()
+        counts.activeCount = 5
+        let image = NSImage.domino(counts: counts)
+        XCTAssertNotNil(image)
+        XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
+    }
+
+    func testIconDispatcherDomino() {
         var counts = StateCounts()
         counts.waitingCount = 2
-        let image = NSImage.icon(style: .compactBar, counts: counts)
+        let image = NSImage.icon(style: .domino, counts: counts)
         XCTAssertNotNil(image)
     }
 
@@ -155,7 +171,7 @@ final class TrafficLightTests: XCTestCase {
     func testTextCounterIdle() {
         let image = NSImage.textCounter(counts: StateCounts())
         XCTAssertNotNil(image)
-        XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
+        XCTAssertEqual(image.size.width, 28)
         XCTAssertEqual(image.size.height, DesignTokens.iconHeight)
         XCTAssertFalse(image.isTemplate)
     }
@@ -165,7 +181,7 @@ final class TrafficLightTests: XCTestCase {
         counts.permissionCount = 2
         let image = NSImage.textCounter(counts: counts)
         XCTAssertNotNil(image)
-        XCTAssertEqual(image.size.width, DesignTokens.iconWidth)
+        XCTAssertEqual(image.size.width, 28)
     }
 
     func testIconDispatcherTextCounter() {
@@ -177,15 +193,15 @@ final class TrafficLightTests: XCTestCase {
 
     // MARK: - All Styles Produce Correct Size
 
-    func testAllStylesCorrectSize() {
+    func testAllStylesCorrectHeight() {
         var counts = StateCounts()
         counts.activeCount = 1
         counts.waitingCount = 1
 
         for style in IconStyle.allCases {
             let image = NSImage.icon(style: style, counts: counts)
-            XCTAssertEqual(image.size.width, DesignTokens.iconWidth, "Width mismatch for \(style)")
             XCTAssertEqual(image.size.height, DesignTokens.iconHeight, "Height mismatch for \(style)")
+            XCTAssertGreaterThan(image.size.width, 0, "Width should be positive for \(style)")
             XCTAssertFalse(image.isTemplate, "isTemplate should be false for \(style)")
         }
     }

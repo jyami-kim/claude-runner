@@ -7,8 +7,8 @@ final class AppSettingsTests: XCTestCase {
 
     func testIconStyleRawValues() {
         XCTAssertEqual(IconStyle.trafficLight.rawValue, "trafficLight")
-        XCTAssertEqual(IconStyle.singleDot.rawValue, "singleDot")
-        XCTAssertEqual(IconStyle.compactBar.rawValue, "compactBar")
+        XCTAssertEqual(IconStyle.pieChart.rawValue, "pieChart")
+        XCTAssertEqual(IconStyle.domino.rawValue, "domino")
         XCTAssertEqual(IconStyle.textCounter.rawValue, "textCounter")
     }
 
@@ -53,9 +53,10 @@ final class AppSettingsTests: XCTestCase {
 
         // Verify default raw values match expected
         XCTAssertNil(defaults.object(forKey: "launchAtLogin"))
+        XCTAssertNil(defaults.object(forKey: "notifyOnStateChange"))
         XCTAssertNil(defaults.object(forKey: "iconStyle"))
         XCTAssertNil(defaults.object(forKey: "sessionDisplayFormat"))
-        XCTAssertNil(defaults.object(forKey: "staleTimeoutSeconds"))
+        XCTAssertNil(defaults.object(forKey: "staleTimeoutMinutes"))
     }
 
     func testIconStylePersistence() {
@@ -63,10 +64,10 @@ final class AppSettingsTests: XCTestCase {
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
-        defaults.set(IconStyle.singleDot.rawValue, forKey: "iconStyle")
+        defaults.set(IconStyle.pieChart.rawValue, forKey: "iconStyle")
         let stored = defaults.string(forKey: "iconStyle")
-        XCTAssertEqual(stored, "singleDot")
-        XCTAssertEqual(IconStyle(rawValue: stored!), .singleDot)
+        XCTAssertEqual(stored, "pieChart")
+        XCTAssertEqual(IconStyle(rawValue: stored!), .pieChart)
     }
 
     func testSessionDisplayFormatPersistence() {
@@ -85,7 +86,16 @@ final class AppSettingsTests: XCTestCase {
         let defaults = UserDefaults(suiteName: suiteName)!
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
-        defaults.set(15, forKey: "staleTimeoutSeconds")
-        XCTAssertEqual(defaults.integer(forKey: "staleTimeoutSeconds"), 15)
+        defaults.set(15, forKey: "staleTimeoutMinutes")
+        XCTAssertEqual(defaults.integer(forKey: "staleTimeoutMinutes"), 15)
+    }
+
+    func testNotifyOnStateChangePersistence() {
+        let suiteName = "test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        defaults.set(false, forKey: "notifyOnStateChange")
+        XCTAssertFalse(defaults.bool(forKey: "notifyOnStateChange"))
     }
 }

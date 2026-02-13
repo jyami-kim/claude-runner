@@ -65,7 +65,7 @@ struct SessionListView: View {
     }
 
     private func openSettings() {
-        // Phase 2: settings panel
+        NotificationCenter.default.post(name: .openSettings, object: nil)
     }
 
     private func quitApp() {

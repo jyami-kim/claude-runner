@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var watcher: SessionDirectoryWatcher!
     private var cancellables = Set<AnyCancellable>()
     private var eventMonitor: Any?
+    private var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Install hook script on first launch
@@ -17,7 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let store = StateStore.shared
 
         // Setup status bar item
-        statusItem = NSStatusBar.system.statusItem(withLength: 38)
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusIcon = StatusIcon(statusItem: statusItem)
 
         // Setup popover
@@ -52,6 +53,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 popover.performClose(nil)
             }
         }
+
+        // Listen for settings open request
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(showSettings),
+            name: .openSettings, object: nil
+        )
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -70,5 +77,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             StateStore.shared.reload()
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
+    }
+
+    @objc private func showSettings() {
+        // Close popover first
+        if popover.isShown {
+            popover.performClose(nil)
+        }
+
+        if let window = settingsWindow {
+            window.level = .floating
+            window.makeKeyAndOrderFront(nil)
+            window.level = .normal
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let hostingController = NSHostingController(rootView: SettingsView())
+        let window = NSWindow(contentViewController: hostingController)
+        window.title = "claude-runner Settings"
+        window.styleMask = [.titled, .closable]
+        window.setContentSize(NSSize(width: 360, height: 520))
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.level = .floating
+        window.makeKeyAndOrderFront(nil)
+        window.level = .normal
+        NSApp.activate(ignoringOtherApps: true)
+
+        settingsWindow = window
     }
 }

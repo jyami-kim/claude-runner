@@ -5,8 +5,8 @@ import SwiftUI
 /// Menu bar icon rendering style
 enum IconStyle: String, CaseIterable {
     case trafficLight
-    case singleDot
-    case compactBar
+    case pieChart
+    case domino
     case textCounter
 }
 
@@ -26,7 +26,8 @@ final class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
     @AppStorage("launchAtLogin") var launchAtLogin = false
+    @AppStorage("notifyOnStateChange") var notifyOnStateChange = true
     @AppStorage("iconStyle") var iconStyle: IconStyle = .trafficLight
     @AppStorage("sessionDisplayFormat") var sessionDisplayFormat: SessionDisplayFormat = .fullPath
-    @AppStorage("staleTimeoutSeconds") var staleTimeoutSeconds: Int = 600 // seconds (session file deletion, user-configurable)
+    @AppStorage("staleTimeoutMinutes") var staleTimeoutMinutes: Int = 10
 }

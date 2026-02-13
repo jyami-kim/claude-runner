@@ -139,7 +139,7 @@ final class StateStore: ObservableObject {
     init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         sessionsDirectory = appSupport.appendingPathComponent("claude-runner/sessions", isDirectory: true)
-        staleThreshold = TimeInterval(AppSettings.shared.staleTimeoutSeconds)
+        staleThreshold = TimeInterval(AppSettings.shared.staleTimeoutMinutes * 60)
 
         decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
