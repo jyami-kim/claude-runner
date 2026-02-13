@@ -69,4 +69,170 @@ extension NSImage {
         image.isTemplate = false
         return image
     }
+
+    /// Creates an icon for the given style and state counts.
+    static func icon(style: IconStyle, counts: StateCounts) -> NSImage {
+        switch style {
+        case .trafficLight:
+            return trafficLight(counts: counts)
+        case .singleDot:
+            return singleDot(counts: counts)
+        case .compactBar:
+            return compactBar(counts: counts)
+        case .textCounter:
+            return textCounter(counts: counts)
+        }
+    }
+
+    // MARK: - Single Dot
+
+    /// A single colored dot showing the highest-priority state, with session count text.
+    static func singleDot(counts: StateCounts) -> NSImage {
+        let width = DesignTokens.iconWidth
+        let height = DesignTokens.iconHeight
+        let dotDiameter: CGFloat = 10
+
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
+            // Determine dominant color
+            let color: NSColor
+            if counts.permissionCount > 0 {
+                color = DesignTokens.red
+            } else if counts.waitingCount > 0 {
+                color = DesignTokens.yellow
+            } else if counts.activeCount > 0 {
+                color = DesignTokens.green
+            } else {
+                color = NSColor.gray.withAlphaComponent(DesignTokens.dimAlpha)
+            }
+
+            let total = counts.totalCount
+            let countStr = total > 0 ? "\(total)" : ""
+            let countAttrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.monospacedDigitSystemFont(ofSize: 9, weight: .semibold),
+                .foregroundColor: NSColor.white
+            ]
+            let countSize = (countStr as NSString).size(withAttributes: countAttrs)
+
+            // Layout: dot + gap + count text, centered
+            let gap: CGFloat = total > 0 ? 2 : 0
+            let totalContentWidth = dotDiameter + gap + countSize.width
+            let startX = (width - totalContentWidth) / 2
+
+            // Draw dot
+            let dotY = (height - dotDiameter) / 2
+            let dotRect = NSRect(x: startX, y: dotY, width: dotDiameter, height: dotDiameter)
+            let path = NSBezierPath(ovalIn: dotRect)
+            color.setFill()
+            path.fill()
+
+            // Draw count text
+            if total > 0 {
+                let textX = startX + dotDiameter + gap
+                let textY = (height - countSize.height) / 2
+                (countStr as NSString).draw(at: NSPoint(x: textX, y: textY), withAttributes: countAttrs)
+            }
+
+            return true
+        }
+
+        image.isTemplate = false
+        return image
+    }
+
+    // MARK: - Compact Bar
+
+    /// A horizontal bar showing proportional state colors.
+    static func compactBar(counts: StateCounts) -> NSImage {
+        let width = DesignTokens.iconWidth
+        let height = DesignTokens.iconHeight
+        let barHeight: CGFloat = 6
+        let barWidth: CGFloat = width - 4
+        let cornerRadius: CGFloat = 3
+
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
+            let barY = (height - barHeight) / 2
+            let barX: CGFloat = 2
+            let total = counts.totalCount
+
+            if total == 0 {
+                // Empty bar
+                let rect = NSRect(x: barX, y: barY, width: barWidth, height: barHeight)
+                let path = NSBezierPath(roundedRect: rect, xRadius: cornerRadius, yRadius: cornerRadius)
+                NSColor.gray.withAlphaComponent(DesignTokens.dimAlpha).setFill()
+                path.fill()
+                return true
+            }
+
+            // Clip to rounded rect
+            let clipRect = NSRect(x: barX, y: barY, width: barWidth, height: barHeight)
+            let clipPath = NSBezierPath(roundedRect: clipRect, xRadius: cornerRadius, yRadius: cornerRadius)
+            clipPath.addClip()
+
+            // Draw proportional segments: permission (red) → waiting (yellow) → active (green)
+            let segments: [(color: NSColor, count: Int)] = [
+                (DesignTokens.red, counts.permissionCount),
+                (DesignTokens.yellow, counts.waitingCount),
+                (DesignTokens.green, counts.activeCount)
+            ]
+
+            var currentX = barX
+            for (color, count) in segments {
+                guard count > 0 else { continue }
+                let segmentWidth = barWidth * CGFloat(count) / CGFloat(total)
+                let rect = NSRect(x: currentX, y: barY, width: segmentWidth, height: barHeight)
+                color.setFill()
+                NSBezierPath(rect: rect).fill()
+                currentX += segmentWidth
+            }
+
+            return true
+        }
+
+        image.isTemplate = false
+        return image
+    }
+
+    // MARK: - Text Counter
+
+    /// "CC" text with a background color matching the dominant state.
+    static func textCounter(counts: StateCounts) -> NSImage {
+        let width = DesignTokens.iconWidth
+        let height = DesignTokens.iconHeight
+
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
+            // Background color based on dominant state
+            let bgColor: NSColor
+            if counts.permissionCount > 0 {
+                bgColor = DesignTokens.red
+            } else if counts.waitingCount > 0 {
+                bgColor = DesignTokens.yellow
+            } else if counts.activeCount > 0 {
+                bgColor = DesignTokens.green
+            } else {
+                bgColor = NSColor.gray.withAlphaComponent(0.3)
+            }
+
+            // Draw rounded background
+            let inset: CGFloat = 1
+            let bgRect = NSRect(x: inset, y: inset, width: width - inset * 2, height: height - inset * 2)
+            let bgPath = NSBezierPath(roundedRect: bgRect, xRadius: 4, yRadius: 4)
+            bgColor.setFill()
+            bgPath.fill()
+
+            // Draw "CC" text
+            let textAttrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.systemFont(ofSize: 10, weight: .bold),
+                .foregroundColor: NSColor.white
+            ]
+            let textSize = ("CC" as NSString).size(withAttributes: textAttrs)
+            let textX = (width - textSize.width) / 2
+            let textY = (height - textSize.height) / 2
+            ("CC" as NSString).draw(at: NSPoint(x: textX, y: textY), withAttributes: textAttrs)
+
+            return true
+        }
+
+        image.isTemplate = false
+        return image
+    }
 }

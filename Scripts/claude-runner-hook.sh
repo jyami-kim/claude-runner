@@ -8,6 +8,12 @@ set -euo pipefail
 SESSIONS_DIR="$HOME/Library/Application Support/claude-runner/sessions"
 mkdir -p "$SESSIONS_DIR"
 
+# Debug logging (temporary - remove after diagnosis)
+DEBUG_LOG="$HOME/Library/Application Support/claude-runner/debug.log"
+log_debug() {
+    echo "$(date '+%H:%M:%S') EVENT=$HOOK_EVENT SID=${SESSION_ID:-?} STATE=${STATE:-?}" >> "$DEBUG_LOG"
+}
+
 # Read JSON from stdin
 INPUT=$(cat)
 
@@ -15,6 +21,49 @@ INPUT=$(cat)
 HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
+# Detect parent terminal/IDE bundle ID by walking the PPID chain
+detect_bundle_id() {
+    local pid=$$
+    while [ "$pid" -gt 1 ] 2>/dev/null; do
+        pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d ' ')
+        [ -z "$pid" ] || [ "$pid" -le 1 ] 2>/dev/null && break
+
+        # Try lsappinfo first (fast, no disk I/O)
+        local bundle
+        bundle=$(lsappinfo info -only bundleid -app "pid=$pid" 2>/dev/null | grep -o '"[^"]*"' | tr -d '"')
+        if [ -n "$bundle" ]; then
+            echo "$bundle"
+            return
+        fi
+
+        # Fallback: resolve executable → .app bundle → read Info.plist
+        local exe
+        exe=$(ps -p "$pid" -o comm= 2>/dev/null | tr -d ' ')
+        if [ -n "$exe" ] && [[ "$exe" == *".app/"* ]]; then
+            local app_path="${exe%%\.app/*}.app"
+            local plist="$app_path/Contents/Info.plist"
+            if [ -f "$plist" ]; then
+                local fb
+                fb=$(/usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" "$plist" 2>/dev/null)
+                if [ -n "$fb" ]; then
+                    echo "$fb"
+                    return
+                fi
+            fi
+        fi
+    done
+    echo ""
+}
+
+TERMINAL_BUNDLE_ID=$(detect_bundle_id)
+
+# Capture TTY for terminal tab matching (e.g., /dev/ttys016)
+SESSION_TTY=$(ps -p $PPID -o tty= 2>/dev/null || echo "")
+if [ -n "$SESSION_TTY" ] && [[ "$SESSION_TTY" != *"?"* ]]; then
+    SESSION_TTY="/dev/$SESSION_TTY"
+else
+    SESSION_TTY=""
+fi
 
 # Exit if no session ID
 if [ -z "$SESSION_ID" ]; then
@@ -24,9 +73,23 @@ fi
 SESSION_FILE="$SESSIONS_DIR/${SESSION_ID}.json"
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+# Determine started_at: capture on SessionStart, preserve from existing file otherwise
+if [ "$HOOK_EVENT" = "SessionStart" ]; then
+    STARTED_AT="$TIMESTAMP"
+elif [ -f "$SESSION_FILE" ]; then
+    STARTED_AT=$(jq -r '.started_at // empty' "$SESSION_FILE")
+fi
+STARTED_AT="${STARTED_AT:-$TIMESTAMP}"
+
 # Determine state based on hook event
 case "$HOOK_EVENT" in
-    SessionStart|UserPromptSubmit)
+    SessionStart)
+        STATE="waiting"
+        ;;
+    UserPromptSubmit)
+        STATE="active"
+        ;;
+    PreToolUse)
         STATE="active"
         ;;
     Stop)
@@ -56,6 +119,9 @@ case "$HOOK_EVENT" in
         ;;
 esac
 
+# Debug: log every state transition
+log_debug
+
 # Atomic write: temp file then mv
 TEMP_FILE=$(mktemp "$SESSIONS_DIR/.tmp.XXXXXX")
 jq -n \
@@ -63,7 +129,10 @@ jq -n \
     --arg cwd "$CWD" \
     --arg state "$STATE" \
     --arg ts "$TIMESTAMP" \
-    '{"session_id":$sid,"cwd":$cwd,"state":$state,"updated_at":$ts}' > "$TEMP_FILE"
+    --arg bid "$TERMINAL_BUNDLE_ID" \
+    --arg tty "$SESSION_TTY" \
+    --arg started "$STARTED_AT" \
+    '{"session_id":$sid,"cwd":$cwd,"state":$state,"updated_at":$ts,"started_at":$started,"terminal_bundle_id":$bid,"tty":$tty}' > "$TEMP_FILE"
 mv "$TEMP_FILE" "$SESSION_FILE"
 
 exit 0

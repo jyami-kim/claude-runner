@@ -20,6 +20,11 @@ enum SessionState: String, Codable, Comparable {
     static func < (lhs: SessionState, rhs: SessionState) -> Bool {
         lhs.priority < rhs.priority
     }
+
+    /// English state label for accessibility
+    var label: String {
+        rawValue
+    }
 }
 
 // MARK: - Session Entry
@@ -29,6 +34,9 @@ struct SessionEntry: Codable, Identifiable {
     let cwd: String
     let state: SessionState
     let updatedAt: Date
+    let startedAt: Date?
+    let terminalBundleId: String?
+    let tty: String?
 
     var id: String { sessionId }
 
@@ -37,19 +45,51 @@ struct SessionEntry: Codable, Identifiable {
         (cwd as NSString).lastPathComponent
     }
 
-    /// Time elapsed since last update
-    var elapsed: TimeInterval {
-        Date().timeIntervalSince(updatedAt)
+    /// Display path based on the given format setting.
+    func formattedPath(format: SessionDisplayFormat) -> String {
+        switch format {
+        case .fullPath:
+            let home = NSHomeDirectory()
+            if cwd.hasPrefix(home) {
+                return "~" + cwd.dropFirst(home.count)
+            }
+            return cwd
+        case .directoryOnly:
+            return (cwd as NSString).lastPathComponent
+        case .lastTwoDirs:
+            let components = cwd.split(separator: "/", omittingEmptySubsequences: true)
+            if components.count >= 2 {
+                return components.suffix(2).joined(separator: "/")
+            }
+            return (cwd as NSString).lastPathComponent
+        }
     }
 
-    /// Formatted elapsed time string
+    /// Default display path using fullPath format
+    var displayPath: String {
+        formattedPath(format: .fullPath)
+    }
+
+    /// Reference date for elapsed time: startedAt if available, otherwise updatedAt
+    var referenceDate: Date {
+        startedAt ?? updatedAt
+    }
+
+    /// Time elapsed since session start
+    var elapsed: TimeInterval {
+        Date().timeIntervalSince(referenceDate)
+    }
+
+    /// Formatted elapsed time string (e.g. "< 1m", "3m", "1h 23m")
     var elapsedText: String {
         let seconds = Int(elapsed)
-        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 60 { return "< 1m" }
         let minutes = seconds / 60
         if minutes < 60 { return "\(minutes)m" }
         let hours = minutes / 60
-        return "\(hours)h"
+        let remainingMinutes = minutes % 60
+        if remainingMinutes == 0 { return "\(hours)h" }
+        return "\(hours)h \(remainingMinutes)m"
     }
 
     enum CodingKeys: String, CodingKey {
@@ -57,6 +97,9 @@ struct SessionEntry: Codable, Identifiable {
         case cwd
         case state
         case updatedAt = "updated_at"
+        case startedAt = "started_at"
+        case terminalBundleId = "terminal_bundle_id"
+        case tty
     }
 }
 
@@ -90,11 +133,12 @@ final class StateStore: ObservableObject {
 
     private let sessionsDirectory: URL
     private let decoder: JSONDecoder
-    private let staleThreshold: TimeInterval = 600 // 10 minutes
+    let staleThreshold: TimeInterval
 
     init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         sessionsDirectory = appSupport.appendingPathComponent("claude-runner/sessions", isDirectory: true)
+        staleThreshold = TimeInterval(AppSettings.shared.staleTimeout * 60)
 
         decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -104,6 +148,19 @@ final class StateStore: ObservableObject {
 
         // Initial load
         reload()
+    }
+
+    /// Testable initializer with custom directory
+    init(sessionsDirectory: URL, staleThreshold: TimeInterval = 600, autoReload: Bool = true) {
+        self.sessionsDirectory = sessionsDirectory
+        self.staleThreshold = staleThreshold
+
+        decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+
+        try? FileManager.default.createDirectory(at: sessionsDirectory, withIntermediateDirectories: true)
+
+        if autoReload { reload() }
     }
 
     func reload() {

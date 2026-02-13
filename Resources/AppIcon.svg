@@ -59,24 +59,27 @@
     </radialGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="512" height="512" fill="url(#bg-radial)" clip-path="url(#squircle-clip)" />
+  <!-- Background (squircle path, no clip — outside is transparent) -->
+  <path d="M 110 0 L 402 0 C 470 0 512 42 512 110 L 512 402 C 512 470 470 512 402 512 L 110 512 C 42 512 0 470 0 402 L 0 110 C 0 42 42 0 110 0 Z" fill="url(#bg-radial)" />
 
-  <!-- Red neon dot -->
-  <g filter="url(#neon-red)">
-    <circle cx="166" cy="256" r="25" fill="url(#neon-red-grad)" opacity="0.25" />
-    <circle cx="166" cy="256" r="25" fill="url(#neon-red-grad)" />
-  </g>
+  <!-- Clip neon glow to squircle boundary -->
+  <g clip-path="url(#squircle-clip)">
+    <!-- Red neon dot -->
+    <g filter="url(#neon-red)">
+      <circle cx="166" cy="256" r="25" fill="url(#neon-red-grad)" opacity="0.25" />
+      <circle cx="166" cy="256" r="25" fill="url(#neon-red-grad)" />
+    </g>
 
-  <!-- Yellow neon dot -->
-  <g filter="url(#neon-yellow)">
-    <circle cx="256" cy="256" r="25" fill="url(#neon-yellow-grad)" opacity="0.25" />
-    <circle cx="256" cy="256" r="25" fill="url(#neon-yellow-grad)" />
-  </g>
+    <!-- Yellow neon dot -->
+    <g filter="url(#neon-yellow)">
+      <circle cx="256" cy="256" r="25" fill="url(#neon-yellow-grad)" opacity="0.25" />
+      <circle cx="256" cy="256" r="25" fill="url(#neon-yellow-grad)" />
+    </g>
 
-  <!-- Green neon dot -->
-  <g filter="url(#neon-green)">
-    <circle cx="346" cy="256" r="25" fill="url(#neon-green-grad)" opacity="0.25" />
-    <circle cx="346" cy="256" r="25" fill="url(#neon-green-grad)" />
+    <!-- Green neon dot -->
+    <g filter="url(#neon-green)">
+      <circle cx="346" cy="256" r="25" fill="url(#neon-green-grad)" opacity="0.25" />
+      <circle cx="346" cy="256" r="25" fill="url(#neon-green-grad)" />
+    </g>
   </g>
 </svg>

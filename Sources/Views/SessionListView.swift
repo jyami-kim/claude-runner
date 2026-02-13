@@ -77,33 +77,39 @@ struct SessionListView: View {
 
 struct SessionRow: View {
     let session: SessionEntry
+    @ObservedObject private var settings = AppSettings.shared
 
     @State private var isHovered = false
     @State private var currentTime = Date()
     private let timer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
-        HStack(spacing: DesignTokens.dotTextGap) {
-            Circle()
-                .fill(DesignTokens.color(for: session.state))
-                .frame(width: DesignTokens.dotSize, height: DesignTokens.dotSize)
+        Button {
+            TerminalFocuser.focus(session: session)
+        } label: {
+            HStack(spacing: DesignTokens.dotTextGap) {
+                Circle()
+                    .fill(DesignTokens.color(for: session.state))
+                    .frame(width: DesignTokens.dotSize, height: DesignTokens.dotSize)
 
-            Text(session.projectName)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.primary)
-                .lineLimit(1)
-                .truncationMode(.middle)
+                Text(session.formattedPath(format: settings.sessionDisplayFormat))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.head)
 
-            Spacer()
+                Spacer()
 
-            Text(elapsedText)
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(.secondary)
+                Text(elapsedText)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
+        .buttonStyle(.plain)
         .background(isHovered ? Color.primary.opacity(0.06) : Color.clear)
-        .contentShape(Rectangle())
         .onHover { hovering in
             isHovered = hovering
             if hovering {
@@ -115,15 +121,17 @@ struct SessionRow: View {
         .onReceive(timer) { _ in
             currentTime = Date()
         }
-        .accessibilityLabel("\(session.state.rawValue): \(session.projectName)")
+        .accessibilityLabel("\(session.state.rawValue): \(session.projectName), \(elapsedText)")
     }
 
     private var elapsedText: String {
-        let seconds = Int(currentTime.timeIntervalSince(session.updatedAt))
-        if seconds < 60 { return "\(seconds)s" }
+        let seconds = Int(currentTime.timeIntervalSince(session.referenceDate))
+        if seconds < 60 { return "< 1m" }
         let minutes = seconds / 60
         if minutes < 60 { return "\(minutes)m" }
         let hours = minutes / 60
-        return "\(hours)h"
+        let remainingMinutes = minutes % 60
+        if remainingMinutes == 0 { return "\(hours)h" }
+        return "\(hours)h \(remainingMinutes)m"
     }
 }

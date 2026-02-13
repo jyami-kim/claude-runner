@@ -1,17 +1,19 @@
 import AppKit
 
-/// Manages the menu bar status icon, updating the traffic light image
-/// whenever session state counts change.
+/// Manages the menu bar status icon, updating the image
+/// whenever session state counts or icon style changes.
 final class StatusIcon {
     private let statusItem: NSStatusItem
+    private let settings: AppSettings
 
-    init(statusItem: NSStatusItem) {
+    init(statusItem: NSStatusItem, settings: AppSettings = .shared) {
         self.statusItem = statusItem
+        self.settings = settings
         update(counts: StateCounts())
     }
 
     func update(counts: StateCounts) {
-        let image = NSImage.trafficLight(counts: counts)
+        let image = NSImage.icon(style: settings.iconStyle, counts: counts)
         statusItem.button?.image = image
         statusItem.button?.imagePosition = .imageOnly
 

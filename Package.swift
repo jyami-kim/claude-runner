@@ -7,12 +7,22 @@ let package = Package(
         .macOS(.v13)
     ],
     targets: [
-        .executableTarget(
-            name: "claude-runner",
+        .target(
+            name: "ClaudeRunnerLib",
             path: "Sources",
             resources: [
                 .copy("../Resources/Info.plist")
             ]
+        ),
+        .executableTarget(
+            name: "claude-runner",
+            dependencies: ["ClaudeRunnerLib"],
+            path: "Entry"
+        ),
+        .testTarget(
+            name: "ClaudeRunnerTests",
+            dependencies: ["ClaudeRunnerLib"],
+            path: "Tests"
         )
     ]
 )
