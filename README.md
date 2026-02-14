@@ -31,20 +31,23 @@ macOS 메뉴바에서 Claude Code 세션 상태를 실시간 모니터링하는 
 
 - macOS 13.0+
 
-### 다운로드 설치 (권장)
+### Homebrew (권장)
+
+```bash
+brew install --no-quarantine jyami-kim/tap/claude-runner
+```
+
+> `--no-quarantine` 플래그는 macOS Gatekeeper 경고를 방지합니다. 이 앱은 Apple Developer 인증서 없이 ad-hoc 서명되어 있어 플래그 없이 설치하면 "악성코드를 확인할 수 없습니다" 경고가 나타날 수 있습니다.
+
+### 수동 다운로드
 
 1. [최신 릴리스](https://github.com/jyami-kim/claude-runner/releases/latest)에서 `claude-runner-x.x.x.zip` 다운로드
 2. 압축 해제 후 `claude-runner.app`을 `/Applications/`로 이동
-3. **최초 실행 전** Gatekeeper 격리 속성 제거:
+3. Gatekeeper 격리 속성 제거 후 실행:
    ```bash
    xattr -cr /Applications/claude-runner.app
-   ```
-4. 앱 실행:
-   ```bash
    open /Applications/claude-runner.app
    ```
-
-> **macOS 보안 경고가 뜨는 경우**: 이 앱은 Apple Developer 인증서 없이 ad-hoc 서명되어 있어 "악성코드를 확인할 수 없습니다" 경고가 나타날 수 있습니다. 위의 `xattr -cr` 명령으로 해결되며, 또는 Finder에서 앱을 **우클릭 → 열기**로도 실행할 수 있습니다.
 
 앱이 첫 실행 시 자동으로 Hook 스크립트를 설치하고 `~/.claude/settings.json`에 등록합니다.
 
@@ -65,7 +68,9 @@ open /Applications/claude-runner.app
 
 ### 제거
 
-**앱 내 제거 (권장)**: Settings → Advanced → "Uninstall claude-runner…" 버튼 클릭. Hook 등록 해제 + 세션 데이터 삭제 후 자동 종료됩니다. 이후 `/Applications/claude-runner.app`만 삭제하면 완료.
+**앱 내 제거 (권장)**: Settings → Advanced → "Uninstall claude-runner…" 버튼 클릭. Hook 등록 해제 + 세션 데이터 삭제 + 앱 자동 삭제.
+
+**Homebrew 설치 시**: `brew uninstall claude-runner` (hook 정리 + 세션 데이터 삭제 자동 수행)
 
 **소스 빌드 설치 시**: `./install.sh uninstall`
 
