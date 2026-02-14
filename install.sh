@@ -44,14 +44,16 @@ merge_hooks() {
     local NOTIF_ENTRY
     NOTIF_ENTRY=$(jq -n --arg cmd "$HOOK_CMD" '[
         {"matcher":"permission_prompt","hooks":[{"type":"command","command":$cmd,"async":true}]},
-        {"matcher":"idle_prompt","hooks":[{"type":"command","command":$cmd,"async":true}]}
+        {"matcher":"idle_prompt","hooks":[{"type":"command","command":$cmd,"async":true}]},
+        {"matcher":"elicitation_dialog","hooks":[{"type":"command","command":$cmd,"async":true}]}
     ]')
 
     # Only add hooks that don't already exist
     local UPDATED
     UPDATED=$(cat "$SETTINGS_FILE")
 
-    for hook in SessionStart UserPromptSubmit Stop SessionEnd; do
+    for hook in SessionStart UserPromptSubmit Stop SessionEnd \
+                PreToolUse PostToolUse PostToolUseFailure PermissionRequest; do
         HAS_HOOK=$(echo "$UPDATED" | jq --arg h "$hook" '.hooks[$h] // empty | length')
         if [ "$HAS_HOOK" = "" ] || [ "$HAS_HOOK" = "0" ]; then
             UPDATED=$(echo "$UPDATED" | jq --arg h "$hook" --argjson entry "$HOOK_ENTRY" '.hooks[$h] = $entry')
