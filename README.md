@@ -24,13 +24,9 @@
 
 여러 터미널/IDE에서 Claude Code를 동시에 사용할 때, 어떤 세션이 유저 입력을 기다리는지 한눈에 파악하고, 클릭 한번으로 해당 창으로 전환할 수 있습니다.
 
-<!-- 스크린샷: 메뉴바 아이콘 + 팝오버 세션 목록 -->
-<!-- 아래 이미지 경로를 실제 스크린샷으로 교체하세요 -->
-<!--
 <p align="center">
-  <img src="docs/screenshots/popover.png" width="600" alt="claude-runner popover">
+  <img src="https://github.com/user-attachments/assets/3c4716ed-0ff5-43fa-b7ad-ddca73476705" width="480" alt="claude-runner popover">
 </p>
--->
 
 ## 주요 기능
 
@@ -59,12 +55,9 @@
 
 복수 세션 시 해당 색상 위에 숫자 배지가 표시됩니다 (2개 이상일 때).
 
-<!-- 스크린샷: 아이콘 스타일 4종 비교 -->
-<!--
 <p align="center">
-  <img src="docs/screenshots/icon-styles.png" width="400" alt="Icon styles">
+  <img src="https://github.com/user-attachments/assets/a30031f0-0ba5-4af1-a64c-d3f72b47783d" width="360" alt="Menu bar icon styles">
 </p>
--->
 
 ## 설치
 
@@ -119,12 +112,9 @@ Claude Code Hook (shell script)
 3. **아이콘 업데이트**: 상태별 신호등 원 밝기 + 배지 숫자 렌더링
 4. **클릭-to-포커스**: iTerm2/Terminal.app은 AppleScript TTY 매칭, JetBrains는 Toolbox CLI
 
-<!-- 스크린샷: 설정 화면 -->
-<!--
 <p align="center">
-  <img src="docs/screenshots/settings.png" width="400" alt="Settings">
+  <img src="https://github.com/user-attachments/assets/f78d07a0-77bb-4862-b48b-2807ec1d575f" width="400" alt="Settings">
 </p>
--->
 
 ## 기술 스택
 
