@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Update Info.plist version
+        run: |
+          plutil -replace CFBundleShortVersionString \
+            -string "${{ steps.version.outputs.VERSION }}" \
+            Resources/Info.plist
+
+      - name: Build universal binary
+        run: swift build -c release --arch arm64 --arch x86_64
+
+      - name: Create .app bundle
+        run: |
+          APP_DIR="claude-runner.app"
+          mkdir -p "$APP_DIR/Contents/MacOS"
+          mkdir -p "$APP_DIR/Contents/Resources"
+
+          cp .build/apple/Products/Release/claude-runner "$APP_DIR/Contents/MacOS/claude-runner"
+          cp Resources/Info.plist "$APP_DIR/Contents/"
+          cp Resources/AppIcon.icns "$APP_DIR/Contents/Resources/"
+          cp Scripts/claude-runner-hook.sh "$APP_DIR/Contents/Resources/"
+          echo -n "APPL????" > "$APP_DIR/Contents/PkgInfo"
+
+      - name: Code sign (ad-hoc)
+        run: codesign --force --sign - claude-runner.app
+
+      - name: Create ZIP
+        run: ditto -c -k --keepParent claude-runner.app "claude-runner-${{ steps.version.outputs.VERSION }}.zip"
+
+      - name: Calculate SHA256
+        id: sha256
+        run: |
+          SHA=$(shasum -a 256 claude-runner-*.zip | awk '{print $1}')
+          echo "SHA256=$SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: claude-runner-*.zip
+          body: |
+            ## claude-runner ${{ steps.version.outputs.VERSION }}
+
+            ### Install
+
+            ```bash
+            # Homebrew (coming soon)
+            brew install jyami-kim/tap/claude-runner
+
+            # Manual
+            # 1. Download claude-runner-${{ steps.version.outputs.VERSION }}.zip
+            # 2. Extract and move claude-runner.app to /Applications/
+            # 3. Launch the app (hooks are auto-configured on first launch)
+            ```
+
+            ### SHA256
+            ```
+            ${{ steps.sha256.outputs.SHA256 }}
+            ```
+          generate_release_notes: true
