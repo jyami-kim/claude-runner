@@ -15,7 +15,6 @@ swift test
 - `git status`와 `git diff`로 변경 사항 확인
 - `git log --oneline -3`으로 최근 커밋 스타일 확인
 - 변경 내용을 분석하여 한글 커밋 메시지 작성
-- Co-Authored-By 서명은 포함하지 않는다
 - 변경 사항이 없으면 "커밋할 변경 사항이 없습니다" 출력 후 중단
 
 ### 3. Git Push

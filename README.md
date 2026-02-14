@@ -1,18 +1,52 @@
-# claude-runner
+<p align="center">
+  <img src="Resources/AppIcon.svg" width="128" height="128" alt="claude-runner icon">
+</p>
 
-macOS 메뉴바에서 Claude Code 세션 상태를 실시간 모니터링하는 경량 네이티브 앱.
+<h1 align="center">claude-runner</h1>
+
+<p align="center">
+  macOS 메뉴바에서 Claude Code 세션 상태를 실시간 모니터링하는 경량 네이티브 앱
+</p>
+
+<p align="center">
+  <a href="https://github.com/jyami-kim/claude-runner/releases/latest"><img src="https://img.shields.io/github/v/release/jyami-kim/claude-runner?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/jyami-kim/claude-runner/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/jyami-kim/claude-runner/ci.yml?style=flat-square&label=CI" alt="CI"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-blue?style=flat-square" alt="macOS 13+">
+  <img src="https://img.shields.io/badge/Swift-5.9-orange?style=flat-square" alt="Swift 5.9">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/jyami-kim/claude-runner?style=flat-square" alt="MIT License"></a>
+</p>
+
+<p align="center">
+  <a href="https://buymeacoffee.com/jyami.kim"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
+</p>
+
+---
 
 여러 터미널/IDE에서 Claude Code를 동시에 사용할 때, 어떤 세션이 유저 입력을 기다리는지 한눈에 파악하고, 클릭 한번으로 해당 창으로 전환할 수 있습니다.
 
+<!-- 스크린샷: 메뉴바 아이콘 + 팝오버 세션 목록 -->
+<!-- 아래 이미지 경로를 실제 스크린샷으로 교체하세요 -->
+<!--
+<p align="center">
+  <img src="docs/screenshots/popover.png" width="600" alt="claude-runner popover">
+</p>
+-->
+
 ## 주요 기능
 
-- **메뉴바 상태 아이콘**: 4가지 스타일 (신호등, 파이 차트, 도미노, 텍스트 카운터)
-- **세션 목록 팝오버**: 앱 아이콘, 프로젝트명, 경과시간 표시
-- **클릭-to-포커스**: 세션 클릭 시 해당 터미널/IDE 창으로 전환
-  - iTerm2 / Terminal.app: 정확한 탭/창 전환 (전체화면 지원)
-  - JetBrains IDEs: 프로젝트 창 전환 (Toolbox CLI 연동)
-- **알림**: 권한 승인/유저 입력 대기 시 macOS 알림 (클릭 시 앱 포커스)
-- **설정**: 아이콘 스타일, 경로 표시 형식, 스테일 타임아웃 등
+| 기능 | 설명 |
+|------|------|
+| **메뉴바 상태 아이콘** | 4가지 스타일 (신호등, 파이 차트, 도미노, 텍스트 카운터) |
+| **세션 목록 팝오버** | 앱 아이콘, 프로젝트명, 경과시간 표시 |
+| **클릭-to-포커스** | 세션 클릭 시 해당 터미널/IDE 창으로 즉시 전환 |
+| **macOS 알림** | 권한 승인/유저 입력 대기 시 알림 (클릭 시 앱 포커스) |
+| **설정** | 아이콘 스타일, 경로 표시 형식, 스테일 타임아웃 등 |
+
+### 지원 터미널/IDE
+
+- **iTerm2 / Terminal.app**: AppleScript TTY 매칭 (전체화면 Spaces 지원)
+- **JetBrains IDEs**: Toolbox CLI 연동 프로젝트 창 전환
+- **기타 앱**: `NSRunningApplication` 활성화 폴백
 
 ## 상태 표시
 
@@ -25,11 +59,14 @@ macOS 메뉴바에서 Claude Code 세션 상태를 실시간 모니터링하는 
 
 복수 세션 시 해당 색상 위에 숫자 배지가 표시됩니다 (2개 이상일 때).
 
+<!-- 스크린샷: 아이콘 스타일 4종 비교 -->
+<!--
+<p align="center">
+  <img src="docs/screenshots/icon-styles.png" width="400" alt="Icon styles">
+</p>
+-->
+
 ## 설치
-
-### 요구 사항
-
-- macOS 13.0+
 
 ### Homebrew (권장)
 
@@ -49,11 +86,7 @@ brew install --no-quarantine jyami-kim/tap/claude-runner
    open /Applications/claude-runner.app
    ```
 
-앱이 첫 실행 시 자동으로 Hook 스크립트를 설치하고 `~/.claude/settings.json`에 등록합니다.
-
-### 소스 빌드 설치
-
-Swift 5.9+ 환경이 있다면 소스에서 직접 빌드할 수 있습니다:
+### 소스 빌드
 
 ```bash
 git clone https://github.com/jyami-kim/claude-runner.git
@@ -62,17 +95,15 @@ cd claude-runner
 open /Applications/claude-runner.app
 ```
 
-### 로그인 시 자동 시작
-
-앱 설정 → General → Launch at Login 토글
+> 앱이 첫 실행 시 자동으로 Hook 스크립트를 설치하고 `~/.claude/settings.json`에 등록합니다. 별도 설정 불필요.
 
 ### 제거
 
-**앱 내 제거 (권장)**: Settings → Advanced → "Uninstall claude-runner…" 버튼 클릭. Hook 등록 해제 + 세션 데이터 삭제 + 앱 자동 삭제.
-
-**Homebrew 설치 시**: `brew uninstall claude-runner` (hook 정리 + 세션 데이터 삭제 자동 수행)
-
-**소스 빌드 설치 시**: `./install.sh uninstall`
+| 설치 방법 | 제거 방법 |
+|-----------|-----------|
+| Homebrew | `brew uninstall claude-runner` (hook 정리 + 데이터 삭제 자동) |
+| 수동/소스 | Settings > Advanced > "Uninstall claude-runner..." |
+| 소스 빌드 | `./install.sh uninstall` |
 
 ## 작동 원리
 
@@ -86,75 +117,14 @@ Claude Code Hook (shell script)
 1. **Claude Code Hook**: 세션 이벤트 발생 시 개별 JSON 파일에 상태 기록. 부모 프로세스 체인에서 터미널/IDE 번들 ID와 TTY도 캡처.
 2. **디렉토리 감시**: kqueue 기반 실시간 파일 변경 감지 (CPU 사용 거의 없음)
 3. **아이콘 업데이트**: 상태별 신호등 원 밝기 + 배지 숫자 렌더링
-4. **클릭-to-포커스**: iTerm2/Terminal.app은 AppleScript TTY 매칭, JetBrains는 Toolbox CLI, 기타 앱은 NSRunningApplication 활성화
+4. **클릭-to-포커스**: iTerm2/Terminal.app은 AppleScript TTY 매칭, JetBrains는 Toolbox CLI
 
-### 세션 파일 형식
-
-```json
-{
-  "session_id": "abc123",
-  "cwd": "/Users/you/my-project",
-  "state": "waiting",
-  "updated_at": "2026-02-13T12:34:56Z",
-  "started_at": "2026-02-13T12:30:00Z",
-  "terminal_bundle_id": "com.googlecode.iterm2",
-  "tty": "/dev/ttys005"
-}
-```
-
-각 세션이 자기 파일만 write하므로 쓰기 경합이 없습니다.
-
-## 프로젝트 구조
-
-```
-claude-runner/
-├── Package.swift                          # SPM (외부 의존성 없음)
-├── install.sh                             # 설치/제거 스크립트
-├── Scripts/
-│   └── claude-runner-hook.sh              # Claude Code Hook 스크립트
-├── Sources/
-│   ├── App/
-│   │   ├── ClaudeRunnerApp.swift          # @main 진입점
-│   │   └── AppDelegate.swift              # NSStatusItem + PopoverPanel (NSPanel)
-│   ├── Models/
-│   │   ├── SessionState.swift             # 상태 enum, 모델, StateStore
-│   │   └── AppSettings.swift              # @AppStorage 설정 관리
-│   ├── Views/
-│   │   ├── StatusIcon.swift               # 메뉴바 아이콘 관리
-│   │   ├── SessionListView.swift          # 세션 목록 + 세션 행 (앱 아이콘, 클릭-to-포커스)
-│   │   └── SettingsView.swift             # 설정 윈도우 (5개 섹션)
-│   ├── Services/
-│   │   ├── SessionDirectoryWatcher.swift  # kqueue 디렉토리 감시
-│   │   ├── HookInstaller.swift            # Hook 스크립트 설치
-│   │   ├── LoginItemManager.swift         # SMAppService 로그인 항목 관리
-│   │   ├── NotificationService.swift      # macOS 알림 + 클릭-to-포커스
-│   │   └── TerminalFocuser.swift          # 터미널/IDE 창 포커스 (AppleScript, JetBrains CLI)
-│   └── Extensions/
-│       ├── BundleIdentifier+AppInfo.swift # 번들 ID → 앱 이름/아이콘
-│       ├── DesignTokens.swift             # 공유 색상/치수 상수
-│       └── NSImage+TrafficLight.swift     # 메뉴바 아이콘 렌더링 (4 스타일)
-├── Tests/
-│   ├── SessionStateTests.swift
-│   ├── StateStoreTests.swift
-│   ├── HookStateTransitionTests.swift
-│   ├── DesignTokensTests.swift
-│   ├── TrafficLightTests.swift
-│   ├── AppSettingsTests.swift
-│   ├── LoginItemManagerTests.swift
-│   ├── NotificationServiceTests.swift
-│   └── AppInfoTests.swift
-├── Resources/
-│   ├── Info.plist                         # LSUIElement=true
-│   ├── AppIcon.icns                       # 앱 아이콘
-│   └── AppIcon.svg                        # 아이콘 원본 SVG
-```
-
-## 디자인
-
-- **메뉴바 아이콘**: 4가지 스타일 (신호등, 파이 차트, 도미노, 텍스트 카운터)
-- **팝오버**: 260pt 너비, 세션별 상태 dot + 앱 아이콘 + 프로젝트명 + 앱 이름 + 경과시간
-- **색상**: Apple HIG 준수 (`#FF453A`, `#FFD60A`, `#30D158`)
-- **앱 아이콘**: 미니멀 네온 도트 (Concept 2)
+<!-- 스크린샷: 설정 화면 -->
+<!--
+<p align="center">
+  <img src="docs/screenshots/settings.png" width="400" alt="Settings">
+</p>
+-->
 
 ## 기술 스택
 
@@ -165,6 +135,16 @@ claude-runner/
 - **JetBrains Toolbox CLI** IDE 프로젝트 창 전환
 - **Claude Code Hooks** 연동
 
+## 기여
+
+이슈나 PR은 언제든 환영합니다.
+
 ## 라이선스
 
 MIT
+
+---
+
+<p align="center">
+  <a href="https://buymeacoffee.com/jyami.kim"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me A Coffee"></a>
+</p>

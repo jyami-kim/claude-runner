@@ -52,7 +52,7 @@ final class NotificationServiceTests: XCTestCase {
         XCTAssertEqual(recorder.notifyCallCount, 0)
     }
 
-    func testNoNotifyWhenPermissionAlreadyPresent() {
+    func testNotifyWhenPermissionIncreases() {
         let recorder = MockNotificationService()
         var oldCounts = StateCounts()
         oldCounts.permissionCount = 1
@@ -61,7 +61,7 @@ final class NotificationServiceTests: XCTestCase {
         newCounts.permissionCount = 2
 
         recorder.notify(oldCounts: oldCounts, newCounts: newCounts, sessions: [])
-        XCTAssertEqual(recorder.notifyCallCount, 0)
+        XCTAssertEqual(recorder.notifyCallCount, 1)
     }
 
     func testNoNotifyWhenWaitingAlreadyPresent() {
@@ -141,7 +141,7 @@ private final class MockNotificationService: NotificationSending {
         guard notifyEnabled else { return }
         guard oldCounts != newCounts else { return }
 
-        if oldCounts.permissionCount == 0 && newCounts.permissionCount > 0 {
+        if newCounts.permissionCount > 0 && newCounts.permissionCount > oldCounts.permissionCount {
             let body = newCounts.permissionCount == 1
                 ? "1 session needs approval"
                 : "\(newCounts.permissionCount) sessions need approval"

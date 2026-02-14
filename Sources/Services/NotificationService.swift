@@ -41,8 +41,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
         guard settings.notifyOnStateChange else { return }
         guard oldCounts != newCounts else { return }
 
-        // Permission: 0 → 1+ (most urgent)
-        if oldCounts.permissionCount == 0 && newCounts.permissionCount > 0 {
+        // Permission: count increased (most urgent)
+        if newCounts.permissionCount > 0 && newCounts.permissionCount > oldCounts.permissionCount {
             let body = newCounts.permissionCount == 1
                 ? "1 session needs approval"
                 : "\(newCounts.permissionCount) sessions need approval"
