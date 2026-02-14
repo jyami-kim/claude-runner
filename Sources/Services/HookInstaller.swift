@@ -43,7 +43,7 @@ enum HookInstaller {
 
     private static func findScriptSource() -> URL? {
         let execDir = URL(fileURLWithPath: CommandLine.arguments[0]).deletingLastPathComponent()
-        let candidates = [
+        var candidates = [
             // Development: project root
             URL(fileURLWithPath: #filePath)
                 .deletingLastPathComponent()
@@ -54,6 +54,10 @@ enum HookInstaller {
             execDir.appendingPathComponent("../../Scripts/\(scriptName)"),
             execDir.appendingPathComponent("../Resources/\(scriptName)"),
         ]
+        // Inside .app bundle (distributed via Homebrew or GitHub Release)
+        if let bundled = Bundle.main.url(forResource: "claude-runner-hook", withExtension: "sh") {
+            candidates.append(bundled)
+        }
 
         for candidate in candidates {
             let resolved = candidate.standardized

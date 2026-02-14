@@ -64,8 +64,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var previousCounts = StateCounts()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Install hook script on first launch
+        // Install hook script and register hooks in settings.json
         HookInstaller.install()
+        HookRegistrar.registerHooks()
 
         // Setup notifications
         NotificationService.shared.setup()

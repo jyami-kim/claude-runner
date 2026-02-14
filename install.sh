@@ -4,11 +4,8 @@ set -euo pipefail
 APP_NAME="claude-runner"
 APP_SUPPORT_DIR="$HOME/Library/Application Support/$APP_NAME"
 APP_DIR="/Applications/$APP_NAME.app"
-HOOKS_DIR="$APP_SUPPORT_DIR/hooks"
-SESSIONS_DIR="$APP_SUPPORT_DIR/sessions"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-HOOK_CMD="\"$HOME/Library/Application Support/$APP_NAME/hooks/claude-runner-hook.sh\""
 
 # ─── Helpers ─────────────────────────────────────────────────
 
@@ -19,66 +16,14 @@ print_usage() {
     echo "  uninstall  Remove $APP_NAME, hooks, and session data"
 }
 
-merge_hooks() {
-    # Merge claude-runner hooks into ~/.claude/settings.json
-    # Preserves all existing settings, only adds hooks if missing
-    if ! command -v jq &>/dev/null; then
-        echo "  WARNING: jq not found, skipping settings.json hook registration"
-        echo "  Install jq: brew install jq"
-        echo "  Then manually add hooks to $SETTINGS_FILE"
-        return
-    fi
-
-    mkdir -p "$(dirname "$SETTINGS_FILE")"
-
-    if [ ! -f "$SETTINGS_FILE" ]; then
-        echo '{}' > "$SETTINGS_FILE"
-    fi
-
-    # Backup
-    cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak"
-
-    local HOOK_ENTRY
-    HOOK_ENTRY=$(jq -n --arg cmd "$HOOK_CMD" '[{"hooks":[{"type":"command","command":$cmd,"async":true}]}]')
-
-    local NOTIF_ENTRY
-    NOTIF_ENTRY=$(jq -n --arg cmd "$HOOK_CMD" '[
-        {"matcher":"permission_prompt","hooks":[{"type":"command","command":$cmd,"async":true}]},
-        {"matcher":"idle_prompt","hooks":[{"type":"command","command":$cmd,"async":true}]},
-        {"matcher":"elicitation_dialog","hooks":[{"type":"command","command":$cmd,"async":true}]}
-    ]')
-
-    # Only add hooks that don't already exist
-    local UPDATED
-    UPDATED=$(cat "$SETTINGS_FILE")
-
-    for hook in SessionStart UserPromptSubmit Stop SessionEnd \
-                PreToolUse PostToolUse PostToolUseFailure PermissionRequest; do
-        HAS_HOOK=$(echo "$UPDATED" | jq --arg h "$hook" '.hooks[$h] // empty | length')
-        if [ "$HAS_HOOK" = "" ] || [ "$HAS_HOOK" = "0" ]; then
-            UPDATED=$(echo "$UPDATED" | jq --arg h "$hook" --argjson entry "$HOOK_ENTRY" '.hooks[$h] = $entry')
-        fi
-    done
-
-    HAS_NOTIF=$(echo "$UPDATED" | jq '.hooks.Notification // empty | length')
-    if [ "$HAS_NOTIF" = "" ] || [ "$HAS_NOTIF" = "0" ]; then
-        UPDATED=$(echo "$UPDATED" | jq --argjson entry "$NOTIF_ENTRY" '.hooks.Notification = $entry')
-    fi
-
-    echo "$UPDATED" | jq --sort-keys . > "$SETTINGS_FILE"
-    echo "  Hooks registered in $SETTINGS_FILE"
-    echo "  Backup saved to $SETTINGS_FILE.bak"
-}
-
 remove_hooks() {
+    # Remove claude-runner hook entries from ~/.claude/settings.json
     if [ ! -f "$SETTINGS_FILE" ] || ! command -v jq &>/dev/null; then
         return
     fi
 
     cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak"
 
-    # Remove hook entries whose command contains "claude-runner-hook.sh"
-    # This matches regardless of $HOME expansion or quoting differences
     local UPDATED
     UPDATED=$(cat "$SETTINGS_FILE")
     for hook in SessionStart UserPromptSubmit Stop SessionEnd Notification \
@@ -93,7 +38,6 @@ remove_hooks() {
         ')
     done
 
-    # Clean up empty hooks object
     UPDATED=$(echo "$UPDATED" | jq 'if .hooks | length == 0 then del(.hooks) else . end')
 
     echo "$UPDATED" | jq --sort-keys . > "$SETTINGS_FILE"
@@ -107,7 +51,7 @@ do_install() {
     echo ""
 
     # 1. Build
-    echo "[1/5] Building release binary..."
+    echo "[1/3] Building release binary..."
     cd "$SCRIPT_DIR"
     swift build -c release 2>&1 | tail -1
 
@@ -118,7 +62,7 @@ do_install() {
     fi
 
     # 2. Create .app bundle
-    echo "[2/5] Creating app bundle..."
+    echo "[2/3] Creating app bundle..."
     rm -rf "$APP_DIR"
     mkdir -p "$APP_DIR/Contents/MacOS"
     mkdir -p "$APP_DIR/Contents/Resources"
@@ -134,28 +78,20 @@ do_install() {
         cp "$SCRIPT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/"
     fi
 
+    # Copy hook script into .app bundle (app copies it to Application Support on launch)
+    cp "$SCRIPT_DIR/Scripts/claude-runner-hook.sh" "$APP_DIR/Contents/Resources/"
+
     # 3. Code sign
-    echo "[3/5] Code signing..."
+    echo "[3/3] Code signing..."
     codesign --force --sign - "$APP_DIR" 2>/dev/null && echo "  Signed (ad-hoc)" || echo "  (code signing skipped)"
-
-    # 4. Install hook script
-    echo "[4/5] Installing hook script..."
-    mkdir -p "$HOOKS_DIR"
-    mkdir -p "$SESSIONS_DIR"
-    cp "$SCRIPT_DIR/Scripts/claude-runner-hook.sh" "$HOOKS_DIR/"
-    chmod +x "$HOOKS_DIR/claude-runner-hook.sh"
-
-    # 5. Register hooks in settings.json
-    echo "[5/5] Registering hooks..."
-    merge_hooks
 
     echo ""
     echo "=== Installation Complete ==="
     echo ""
-    echo "  App:     $APP_DIR"
-    echo "  Hooks:   $HOOKS_DIR/claude-runner-hook.sh"
-    echo "  Data:    $SESSIONS_DIR/"
-    echo "  Config:  $SETTINGS_FILE"
+    echo "  App:  $APP_DIR"
+    echo ""
+    echo "  The app automatically installs hooks and registers them"
+    echo "  in ~/.claude/settings.json on first launch."
     echo ""
     echo "Start now:"
     echo "  open /Applications/$APP_NAME.app"
@@ -170,15 +106,18 @@ do_uninstall() {
     echo "=== Uninstalling $APP_NAME ==="
     echo ""
 
+    # Quit running app
+    pkill -f "$APP_NAME.app" 2>/dev/null || true
+
+    # Remove hooks from settings.json
+    echo "  Removing hooks from settings.json..."
+    remove_hooks
+
     # Remove app
     if [ -d "$APP_DIR" ]; then
         rm -rf "$APP_DIR"
         echo "  Removed $APP_DIR"
     fi
-
-    # Remove hooks from settings.json
-    echo "  Removing hooks from settings.json..."
-    remove_hooks
 
     # Remove hook script and sessions
     if [ -d "$APP_SUPPORT_DIR" ]; then

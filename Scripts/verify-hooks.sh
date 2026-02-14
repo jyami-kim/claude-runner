@@ -25,7 +25,7 @@ echo "설정 파일: $SETTINGS_FILE"
 echo ""
 
 # Required hook events
-REQUIRED_EVENTS=("SessionStart" "UserPromptSubmit" "PreToolUse" "PostToolUse" "PostToolUseFailure" "Stop" "SessionEnd")
+REQUIRED_EVENTS=("SessionStart" "UserPromptSubmit" "PreToolUse" "PostToolUse" "PostToolUseFailure" "PermissionRequest" "Stop" "SessionEnd")
 REQUIRED_NOTIFICATIONS=("permission_prompt" "idle_prompt" "elicitation_dialog")
 
 PASS=0
@@ -87,19 +87,6 @@ if [ -f "$INSTALLED_HOOK" ]; then
 else
     echo -e "  ${RED}[FAIL]${NC} Hook 스크립트 미설치: $INSTALLED_HOOK"
     FAIL=$((FAIL + 1))
-fi
-
-# Check debug log
-echo ""
-echo "디버그 로그:"
-DEBUG_LOG="$HOME/Library/Application Support/claude-runner/debug.log"
-if [ -f "$DEBUG_LOG" ]; then
-    LINES=$(wc -l < "$DEBUG_LOG" | tr -d ' ')
-    LAST_ENTRY=$(tail -1 "$DEBUG_LOG")
-    echo -e "  ${GREEN}[OK]${NC}   $DEBUG_LOG ($LINES 줄)"
-    echo -e "  마지막 이벤트: $LAST_ENTRY"
-else
-    echo -e "  ${YELLOW}[INFO]${NC} 디버그 로그 아직 없음 (이벤트 발생 시 생성됨)"
 fi
 
 # Summary

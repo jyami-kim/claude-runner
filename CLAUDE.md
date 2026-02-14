@@ -27,6 +27,7 @@ claude-runner/
 │   │   └── StatusIcon.swift        # Menu bar icon updater
 │   ├── Services/
 │   │   ├── HookInstaller.swift     # Installs hook script to Application Support
+│   │   ├── HookRegistrar.swift     # Registers hooks in ~/.claude/settings.json (no jq needed)
 │   │   ├── SessionDirectoryWatcher.swift  # kqueue-based directory watcher
 │   │   ├── LoginItemManager.swift  # SMAppService wrapper for launch-at-login
 │   │   ├── NotificationService.swift  # UNUserNotificationCenter wrapper + click-to-focus
@@ -49,6 +50,7 @@ claude-runner/
 │   ├── AppSettingsTests.swift
 │   ├── LoginItemManagerTests.swift
 │   ├── NotificationServiceTests.swift
+│   ├── HookRegistrarTests.swift
 │   └── AppInfoTests.swift
 └── Package.swift
 ```
@@ -56,17 +58,19 @@ claude-runner/
 ## Architecture
 
 1. **Hook script** (`claude-runner-hook.sh`) receives Claude Code hook events via stdin JSON, writes per-session `.json` files to `~/Library/Application Support/claude-runner/sessions/`. Captures `terminal_bundle_id` and `tty` from the parent process chain.
-2. **SessionDirectoryWatcher** monitors that directory via kqueue (DispatchSource) and triggers `StateStore.reload()`.
-3. **StateStore** reads JSON files, prunes stale sessions, and publishes `sessions` + `counts`.
-4. **StatusIcon** renders the menu bar icon using `NSImage.icon(style:counts:)`.
-5. **PopoverPanel** (NSPanel subclass) displays the session list. Uses `.regularMaterial` background with rounded corners.
-6. **SessionListView** shows session rows with state dot, app icon, project path, app name, and elapsed time. Clicking a row focuses the terminal/IDE window via `TerminalFocuser`.
-7. **TerminalFocuser** focuses the correct window:
+2. **HookInstaller** copies the hook script from the .app bundle (`Contents/Resources/`) to `~/Library/Application Support/claude-runner/hooks/` on every launch.
+3. **HookRegistrar** idempotently registers hooks in `~/.claude/settings.json` using `JSONSerialization` (no jq dependency). Adds 8 hook events + 3 notification matchers.
+4. **SessionDirectoryWatcher** monitors the sessions directory via kqueue (DispatchSource) and triggers `StateStore.reload()`.
+5. **StateStore** reads JSON files, prunes stale sessions, and publishes `sessions` + `counts`.
+6. **StatusIcon** renders the menu bar icon using `NSImage.icon(style:counts:)`.
+7. **PopoverPanel** (NSPanel subclass) displays the session list. Uses `.regularMaterial` background with rounded corners.
+8. **SessionListView** shows session rows with state dot, app icon, project path, app name, and elapsed time. Clicking a row focuses the terminal/IDE window via `TerminalFocuser`.
+9. **TerminalFocuser** focuses the correct window:
    - **iTerm2 / Terminal.app**: NSAppleScript with TTY matching (works in full-screen Spaces)
    - **JetBrains IDEs**: Toolbox CLI launcher (`idea`, `pycharm`, etc.) with project path
    - **Other apps**: `NSRunningApplication.activate()` fallback
-8. **NotificationService** sends alerts for permission/waiting state changes. Clicking a notification focuses the session's terminal app.
-9. **SettingsView** provides a settings window with General, Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
+10. **NotificationService** sends alerts for permission/waiting state changes. Clicking a notification focuses the session's terminal app.
+11. **SettingsView** provides a settings window with General, Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
 
 ## Build & Test
 
@@ -78,9 +82,11 @@ swift test
 ## Install
 
 ```bash
-./install.sh          # Build, create .app, install hooks
-open /Applications/claude-runner.app
+./install.sh          # Build, create .app bundle
+open /Applications/claude-runner.app  # Auto-installs hooks on first launch
 ```
+
+The app automatically installs the hook script and registers hooks in `~/.claude/settings.json` on every launch (idempotent). No `jq` dependency required for installation.
 
 ## Development Guidelines
 
