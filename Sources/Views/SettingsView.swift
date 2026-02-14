@@ -184,6 +184,8 @@ struct SettingsView: View {
 
     // MARK: - Advanced
 
+    @State private var showUninstallConfirm = false
+
     private var advancedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Advanced")
@@ -204,6 +206,48 @@ struct SettingsView: View {
             Text("Waiting sessions older than this are automatically removed.")
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
+
+            Divider()
+                .padding(.top, 4)
+
+            Button(role: .destructive) {
+                showUninstallConfirm = true
+            } label: {
+                Text("Uninstall claude-runner…")
+                    .font(.system(size: 12))
+            }
+            .alert("Uninstall claude-runner?", isPresented: $showUninstallConfirm) {
+                Button("Cancel", role: .cancel) {}
+                Button("Uninstall", role: .destructive) {
+                    performUninstall()
+                }
+            } message: {
+                Text("Hooks will be removed from ~/.claude/settings.json and session data will be deleted. The app will quit afterwards — delete it from /Applications manually.")
+            }
+        }
+    }
+
+    private func performUninstall() {
+        // 1. Unregister hooks from ~/.claude/settings.json
+        HookRegistrar.unregisterHooks()
+
+        // 2. Remove ~/Library/Application Support/claude-runner/
+        let appSupport = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/claude-runner")
+        try? FileManager.default.removeItem(at: appSupport)
+
+        // 3. Spawn background script to delete .app bundle after quit
+        if let bundlePath = Bundle.main.bundlePath as String? {
+            let script = "sleep 1 && rm -rf \"\(bundlePath)\""
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/bin/bash")
+            process.arguments = ["-c", script]
+            try? process.run()
+        }
+
+        // 4. Quit the app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            NSApplication.shared.terminate(nil)
         }
     }
 }
