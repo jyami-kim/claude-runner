@@ -60,13 +60,13 @@ jobs:
             ### Install
 
             ```bash
-            # Homebrew (coming soon)
             brew install jyami-kim/tap/claude-runner
 
             # Manual
             # 1. Download claude-runner-${{ steps.version.outputs.VERSION }}.zip
             # 2. Extract and move claude-runner.app to /Applications/
-            # 3. Launch the app (hooks are auto-configured on first launch)
+            # 3. xattr -cr /Applications/claude-runner.app
+            # 4. open /Applications/claude-runner.app
             ```
 
             ### SHA256
@@ -74,3 +74,36 @@ jobs:
             ${{ steps.sha256.outputs.SHA256 }}
             ```
           generate_release_notes: true
+
+      - name: Update Homebrew tap
+        env:
+          TAP_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/jyami-kim/homebrew-tap.git /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+
+          cat > Casks/claude-runner.rb << 'CASK'
+          cask "claude-runner" do
+            version "${{ steps.version.outputs.VERSION }}"
+            sha256 "${{ steps.sha256.outputs.SHA256 }}"
+
+            url "https://github.com/jyami-kim/claude-runner/releases/download/v#{version}/claude-runner-#{version}.zip"
+            name "claude-runner"
+            desc "macOS menu bar app for monitoring Claude Code sessions"
+            homepage "https://github.com/jyami-kim/claude-runner"
+
+            depends_on macos: ">= :ventura"
+
+            app "claude-runner.app"
+
+            zap trash: [
+              "~/Library/Application Support/claude-runner",
+            ]
+          end
+          CASK
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/claude-runner.rb
+          git commit -m "Update claude-runner to ${{ steps.version.outputs.VERSION }}"
+          git push
