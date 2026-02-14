@@ -21,10 +21,6 @@ enum SessionState: String, Codable, Comparable {
         lhs.priority < rhs.priority
     }
 
-    /// English state label for accessibility
-    var label: String {
-        rawValue
-    }
 }
 
 // MARK: - Session Entry
@@ -75,14 +71,9 @@ struct SessionEntry: Codable, Identifiable {
         startedAt ?? updatedAt
     }
 
-    /// Time elapsed since session start
-    var elapsed: TimeInterval {
-        Date().timeIntervalSince(referenceDate)
-    }
-
     /// Formatted elapsed time string (e.g. "< 1m", "3m", "1h 23m")
     var elapsedText: String {
-        let seconds = Int(elapsed)
+        let seconds = Int(Date().timeIntervalSince(referenceDate))
         if seconds < 60 { return "< 1m" }
         let minutes = seconds / 60
         if minutes < 60 { return "\(minutes)m" }

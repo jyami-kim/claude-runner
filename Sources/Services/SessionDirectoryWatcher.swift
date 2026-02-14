@@ -21,7 +21,6 @@ final class SessionDirectoryWatcher {
 
         let fd = open(sessionsURL.path, O_EVTONLY)
         guard fd >= 0 else {
-            print("[SessionDirectoryWatcher] kqueue failed, falling back to polling")
             startPolling()
             return
         }
@@ -43,7 +42,6 @@ final class SessionDirectoryWatcher {
         self.source = source
         source.resume()
 
-        print("[SessionDirectoryWatcher] Watching: \(sessionsURL.path)")
     }
 
     func stop() {

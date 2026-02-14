@@ -4,3 +4,4 @@
 *.xcworkspace
 DerivedData/
 .DS_Store
+.idea/

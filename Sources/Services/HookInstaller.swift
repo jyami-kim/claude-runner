@@ -13,11 +13,6 @@ enum HookInstaller {
     private static let sessionsDir: URL = appSupportDir.appendingPathComponent("sessions", isDirectory: true)
     private static let scriptName = "claude-runner-hook.sh"
 
-    static var isInstalled: Bool {
-        let dest = hooksDir.appendingPathComponent(scriptName)
-        return FileManager.default.fileExists(atPath: dest.path)
-    }
-
     /// Copies the hook script and creates required directories.
     @discardableResult
     static func install() -> Bool {
@@ -40,10 +35,8 @@ enum HookInstaller {
             // Ensure executable permission
             try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: dest.path)
 
-            print("[HookInstaller] Installed to \(dest.path)")
             return true
         } catch {
-            print("[HookInstaller] Installation failed: \(error)")
             return false
         }
     }

@@ -34,7 +34,6 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
             self?.isAvailable = granted
         }
         center = unc
-        isAvailable = true
     }
 
     /// Compares old and new counts, sending a notification if a notable state change occurred.

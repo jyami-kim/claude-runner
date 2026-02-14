@@ -2,10 +2,9 @@ import AppKit
 import SwiftUI
 import Combine
 
-// MARK: - Popover Panel (replaces NSPopover for reliable click handling)
+// MARK: - Popover Panel
 
 /// Borderless floating panel that acts as a popover from the menu bar.
-/// Unlike NSPopover, clicks inside the panel always register properly.
 final class PopoverPanel: NSPanel {
     override var canBecomeKey: Bool { true }
 
@@ -77,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusIcon = StatusIcon(statusItem: statusItem)
 
-        // Setup panel (replaces NSPopover)
+        // Setup panel
         panel = PopoverPanel(contentView: SessionListView(store: store))
 
         // Setup click handler
@@ -105,7 +104,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             store?.reload()
         }
 
-        // Close panel when clicking outside (but not inside the panel itself)
+        // Close panel when clicking outside
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let panel = self?.panel, panel.isVisible else { return }
 

@@ -24,14 +24,6 @@ final class SessionStateTests: XCTestCase {
         XCTAssertEqual(sorted, [.active, .waiting, .permission])
     }
 
-    // MARK: - SessionState Labels
-
-    func testLabels() {
-        XCTAssertEqual(SessionState.active.label, "active")
-        XCTAssertEqual(SessionState.waiting.label, "waiting")
-        XCTAssertEqual(SessionState.permission.label, "permission")
-    }
-
     // MARK: - SessionEntry Codable
 
     private let decoder: JSONDecoder = {
