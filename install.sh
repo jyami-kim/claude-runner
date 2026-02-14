@@ -75,14 +75,16 @@ remove_hooks() {
 
     cp "$SETTINGS_FILE" "$SETTINGS_FILE.bak"
 
-    # Remove only hooks that point to claude-runner
+    # Remove hook entries whose command contains "claude-runner-hook.sh"
+    # This matches regardless of $HOME expansion or quoting differences
     local UPDATED
     UPDATED=$(cat "$SETTINGS_FILE")
-    for hook in SessionStart UserPromptSubmit Stop SessionEnd Notification; do
-        UPDATED=$(echo "$UPDATED" | jq --arg h "$hook" --arg cmd "$HOOK_CMD" '
+    for hook in SessionStart UserPromptSubmit Stop SessionEnd Notification \
+                PreToolUse PostToolUse PostToolUseFailure PermissionRequest; do
+        UPDATED=$(echo "$UPDATED" | jq --arg h "$hook" '
             if .hooks[$h] then
                 .hooks[$h] |= map(select(
-                    .hooks // [] | all(.command != $cmd)
+                    .hooks // [] | all(.command | contains("claude-runner-hook.sh") | not)
                 )) |
                 if .hooks[$h] | length == 0 then del(.hooks[$h]) else . end
             else . end
