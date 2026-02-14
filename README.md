@@ -134,10 +134,6 @@ claude-runner/
 │   ├── Info.plist                         # LSUIElement=true
 │   ├── AppIcon.icns                       # 앱 아이콘
 │   └── AppIcon.svg                        # 아이콘 원본 SVG
-└── Design/
-    ├── DESIGN_SPEC.md                     # 디자인 스펙
-    ├── FIGMA_PROMPTS.md                   # UI 디자인 프롬프트
-    └── APP_ICON_PROMPTS.md                # 앱 아이콘 프롬프트
 ```
 
 ## 디자인
