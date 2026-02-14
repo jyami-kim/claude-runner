@@ -12,8 +12,8 @@ let package = Package(
             path: "Sources",
             resources: [
                 .copy("../Resources/Info.plist"),
-                .copy("../Scripts/claude-runner-hook.sh"),
-            ],
+                .copy("../Scripts/claude-runner-hook.sh")
+            ]
         ),
         .executableTarget(
             name: "claude-runner",
