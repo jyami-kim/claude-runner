@@ -14,7 +14,7 @@
 
 | Hook 이벤트 | 매핑 상태 | 비고 |
 |------------|----------|------|
-| `SessionStart` | `waiting` | 세션 시작 |
+| `SessionStart` | `waiting` | 세션 시작, 동일 TTY 이전 세션 정리 |
 | `UserPromptSubmit` | `active` | 프롬프트 제출 → 작업 시작 |
 | `PreToolUse` | `active` / `permission` | `AskUserQuestion` → `permission`, 그 외 → `active` |
 | `PostToolUse` | `active` | 도구 완료 → 작업 재개 (승인 후 GREEN 복귀) |
@@ -28,12 +28,29 @@
 
 ### Hook 설정
 
-- 모든 hook은 `async: false`로 설정하여 이벤트 순서를 보장한다.
-- Race condition 방지: `PreToolUse` → `PermissionRequest` 순서가 보장되어야 정확한 상태 전환이 가능.
+- 모든 hook은 `async: true`로 설정하여 Claude Code 실행을 차단하지 않는다.
+- hook 스크립트는 atomic write (temp file + mv)로 세션 파일을 갱신한다.
+
+### 세션 파일 형식
+
+```json
+{
+  "session_id": "abc123",
+  "cwd": "/Users/you/my-project",
+  "state": "waiting",
+  "updated_at": "2026-02-13T12:34:56Z",
+  "started_at": "2026-02-13T12:30:00Z",
+  "terminal_bundle_id": "com.googlecode.iterm2",
+  "tty": "/dev/ttys005"
+}
+```
+
+- `terminal_bundle_id`: 부모 프로세스 체인에서 감지한 터미널/IDE 번들 ID
+- `tty`: 터미널 탭 매칭에 사용되는 TTY 경로
 
 ### Stale Session Pruning
 
-- `waiting` 상태 세션만 `staleTimeoutSeconds` (기본 600초) 경과 시 삭제
+- `waiting` 상태 세션만 `staleTimeoutMinutes` (기본 10분) 경과 시 삭제
 - `active` / `permission` 상태 세션은 시간에 관계없이 보존
 
 ### Known Limitations
@@ -68,9 +85,9 @@
 - **페이로드**: `trigger`, `custom_instructions`
 
 ### 구현 시 고려사항
-- `settings.json`에 hook 등록 추가
+- `settings.json`에 hook 등록 추가 (`install.sh`의 `merge_hooks` 수정)
 - `claude-runner-hook.sh`에 case 추가
-- `verify-hooks.sh`의 `REQUIRED_EVENTS` 배열 업데이트
+- `Scripts/verify-hooks.sh`의 `REQUIRED_EVENTS` 배열 업데이트
 
 ---
 
@@ -94,13 +111,11 @@ Claude Code의 Agent Team 기능을 지원하여 팀원별 상태를 추적한�
 ##### TeammateIdle
 - 팀 모드에서 팀원이 유휴 상태로 전환될 때 발생
 - **페이로드**: `teammate_name`, `team_name`
-- matcher 미지원 (모든 발생에 대해 트리거)
 - 차단 가능 (exit 2)
 
 ##### TaskCompleted
 - 태스크가 완료 표시될 때 발생
 - **페이로드**: `task_id`, `task_subject`, `task_description`, `teammate_name`, `team_name`
-- matcher 미지원
 - 차단 가능 (exit 2)
 
 #### UI 확장 고려
@@ -129,20 +144,6 @@ struct TeammateEntry {
     let name: String
     let state: SessionState
     let taskSubject: String?
-}
-```
-
-#### 세션 파일 확장
-
-```json
-{
-  "session_id": "abc123",
-  "state": "active",
-  "teammates": [
-    { "name": "researcher", "state": "active", "task": "Find API docs" },
-    { "name": "implementer", "state": "waiting", "task": null },
-    { "name": "reviewer", "state": "permission", "task": "Review PR #42" }
-  ]
 }
 ```
 
