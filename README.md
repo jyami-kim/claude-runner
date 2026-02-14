@@ -25,7 +25,7 @@
 여러 터미널/IDE에서 Claude Code를 동시에 사용할 때, 어떤 세션이 유저 입력을 기다리는지 한눈에 파악하고, 클릭 한번으로 해당 창으로 전환할 수 있습니다.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/f78d07a0-77bb-4862-b48b-2807ec1d575f" width="480" alt="claude-runner popover">
+  <img src="https://github.com/user-attachments/assets/3c4716ed-0ff5-43fa-b7ad-ddca73476705" width="400" alt="runner">
 </p>
 
 ## 주요 기능
@@ -56,7 +56,7 @@
 복수 세션 시 해당 색상 위에 숫자 배지가 표시됩니다 (2개 이상일 때).
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/a30031f0-0ba5-4af1-a64c-d3f72b47783d" width="360" alt="Menu bar icon styles">
+  <img src="https://github.com/user-attachments/assets/f78d07a0-77bb-4862-b48b-2807ec1d575f" width="480" alt="claude-runner settings">
 </p>
 
 ## 설치
@@ -113,7 +113,7 @@ Claude Code Hook (shell script)
 4. **클릭-to-포커스**: iTerm2/Terminal.app은 AppleScript TTY 매칭, JetBrains는 Toolbox CLI
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/3c4716ed-0ff5-43fa-b7ad-ddca73476705" width="400" alt="Settings">
+  <img src="https://github.com/user-attachments/assets/a30031f0-0ba5-4af1-a64c-d3f72b47783d" width="360" alt="alrert">
 </p>
 
 ## 기술 스택
