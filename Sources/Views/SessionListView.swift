@@ -83,31 +83,49 @@ struct SessionRow: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 30)) { context in
-            Button {
-                TerminalFocuser.focus(session: session)
-            } label: {
-                HStack(spacing: DesignTokens.dotTextGap) {
-                    Circle()
-                        .fill(DesignTokens.color(for: session.state))
-                        .frame(width: DesignTokens.dotSize, height: DesignTokens.dotSize)
+            HStack(spacing: DesignTokens.dotTextGap) {
+                Circle()
+                    .fill(DesignTokens.color(for: session.state))
+                    .frame(width: DesignTokens.dotSize, height: DesignTokens.dotSize)
 
+                if let bundleId = session.terminalBundleId,
+                   let icon = AppInfo.appIcon(for: bundleId) {
+                    Image(nsImage: icon)
+                        .frame(width: 14, height: 14)
+                        .help(AppInfo.appName(for: bundleId))
+                }
+
+                VStack(alignment: .leading, spacing: 1) {
                     Text(session.formattedPath(format: settings.sessionDisplayFormat))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.primary)
                         .lineLimit(1)
                         .truncationMode(.head)
 
-                    Spacer()
-
-                    Text(elapsedText(at: context.date))
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(.secondary)
+                    if let bundleId = session.terminalBundleId {
+                        Text(AppInfo.appName(for: bundleId))
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .contentShape(Rectangle())
+
+                Spacer()
+
+                Text(elapsedText(at: context.date))
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                NotificationCenter.default.post(name: .closePopover, object: nil)
+                let s = session
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    TerminalFocuser.focus(session: s)
+                }
+            }
             .background(isHovered ? Color.primary.opacity(0.06) : Color.clear)
             .onHover { hovering in
                 isHovered = hovering

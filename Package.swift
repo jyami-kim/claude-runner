@@ -12,7 +12,7 @@ let package = Package(
             path: "Sources",
             resources: [
                 .copy("../Resources/Info.plist")
-            ]
+            ],
         ),
         .executableTarget(
             name: "claude-runner",

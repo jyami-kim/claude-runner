@@ -14,7 +14,7 @@ final class NotificationServiceTests: XCTestCase {
         newCounts.activeCount = 1
         newCounts.permissionCount = 1
 
-        recorder.notify(oldCounts: oldCounts, newCounts: newCounts)
+        recorder.notify(oldCounts: oldCounts, newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 1)
     }
 
@@ -27,7 +27,7 @@ final class NotificationServiceTests: XCTestCase {
         newCounts.activeCount = 1
         newCounts.waitingCount = 1
 
-        recorder.notify(oldCounts: oldCounts, newCounts: newCounts)
+        recorder.notify(oldCounts: oldCounts, newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 1)
     }
 
@@ -39,7 +39,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.activeCount = 2
 
-        recorder.notify(oldCounts: oldCounts, newCounts: newCounts)
+        recorder.notify(oldCounts: oldCounts, newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 0)
     }
 
@@ -48,7 +48,7 @@ final class NotificationServiceTests: XCTestCase {
         var counts = StateCounts()
         counts.activeCount = 1
 
-        recorder.notify(oldCounts: counts, newCounts: counts)
+        recorder.notify(oldCounts: counts, newCounts: counts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 0)
     }
 
@@ -60,7 +60,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.permissionCount = 2
 
-        recorder.notify(oldCounts: oldCounts, newCounts: newCounts)
+        recorder.notify(oldCounts: oldCounts, newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 0)
     }
 
@@ -72,7 +72,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.waitingCount = 2
 
-        recorder.notify(oldCounts: oldCounts, newCounts: newCounts)
+        recorder.notify(oldCounts: oldCounts, newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 0)
     }
 
@@ -81,7 +81,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.permissionCount = 1
 
-        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts)
+        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 0)
     }
 
@@ -91,7 +91,7 @@ final class NotificationServiceTests: XCTestCase {
         newCounts.permissionCount = 1
         newCounts.waitingCount = 1
 
-        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts)
+        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.notifyCallCount, 1)
         XCTAssertEqual(recorder.lastTitle, "Needs Approval")
     }
@@ -101,7 +101,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.waitingCount = 1
 
-        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts)
+        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.lastTitle, "Waiting for Input")
     }
 
@@ -110,7 +110,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.permissionCount = 3
 
-        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts)
+        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.lastBody, "3 sessions need approval")
     }
 
@@ -119,7 +119,7 @@ final class NotificationServiceTests: XCTestCase {
         var newCounts = StateCounts()
         newCounts.waitingCount = 2
 
-        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts)
+        recorder.notify(oldCounts: StateCounts(), newCounts: newCounts, sessions: [])
         XCTAssertEqual(recorder.lastBody, "2 sessions waiting for input")
     }
 }
@@ -137,7 +137,7 @@ private final class MockNotificationService: NotificationSending {
         self.notifyEnabled = notifyEnabled
     }
 
-    func notify(oldCounts: StateCounts, newCounts: StateCounts) {
+    func notify(oldCounts: StateCounts, newCounts: StateCounts, sessions: [SessionEntry]) {
         guard notifyEnabled else { return }
         guard oldCounts != newCounts else { return }
 

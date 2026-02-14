@@ -32,7 +32,7 @@ detect_bundle_id() {
 
         # Fallback: resolve executable → .app bundle → read Info.plist
         local exe
-        exe=$(ps -p "$pid" -o comm= 2>/dev/null | tr -d ' ')
+        exe=$(ps -p "$pid" -o comm= 2>/dev/null | sed 's/^ *//;s/ *$//')
         if [ -n "$exe" ] && [[ "$exe" == *".app/"* ]]; then
             local app_path="${exe%%\.app/*}.app"
             local plist="$app_path/Contents/Info.plist"
@@ -52,7 +52,7 @@ detect_bundle_id() {
 TERMINAL_BUNDLE_ID=$(detect_bundle_id)
 
 # Capture TTY for terminal tab matching (e.g., /dev/ttys016)
-SESSION_TTY=$(ps -p $PPID -o tty= 2>/dev/null || echo "")
+SESSION_TTY=$(ps -p $PPID -o tty= 2>/dev/null | sed 's/^ *//;s/ *$//' || echo "")
 if [ -n "$SESSION_TTY" ] && [[ "$SESSION_TTY" != *"?"* ]]; then
     SESSION_TTY="/dev/$SESSION_TTY"
 else

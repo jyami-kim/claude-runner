@@ -2,10 +2,62 @@ import AppKit
 import SwiftUI
 import Combine
 
+// MARK: - Popover Panel (replaces NSPopover for reliable click handling)
+
+/// Borderless floating panel that acts as a popover from the menu bar.
+/// Unlike NSPopover, clicks inside the panel always register properly.
+final class PopoverPanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+
+    init(contentView: some View) {
+        super.init(
+            contentRect: .zero,
+            styleMask: [.fullSizeContentView, .borderless],
+            backing: .buffered,
+            defer: false
+        )
+        level = .popUpMenu
+        collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        isOpaque = false
+        backgroundColor = .clear
+        hasShadow = true
+        isReleasedWhenClosed = false
+
+        let host = NSHostingController(rootView:
+            contentView
+                .background(.regularMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+        )
+        contentViewController = host
+    }
+
+    /// Position below the status bar button.
+    func show(relativeTo button: NSStatusBarButton) {
+        guard let buttonWindow = button.window else { return }
+        let buttonRect = buttonWindow.convertToScreen(
+            button.convert(button.bounds, to: nil)
+        )
+
+        // Size to fit content
+        contentViewController?.view.layoutSubtreeIfNeeded()
+        let size = contentViewController?.view.fittingSize ?? NSSize(width: 260, height: 300)
+        let panelWidth = max(size.width, 260)
+        let panelHeight = min(size.height, 400)
+
+        let x = buttonRect.midX - panelWidth / 2
+        let y = buttonRect.minY - panelHeight
+
+        setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
+        makeKeyAndOrderFront(nil)
+    }
+}
+
+// MARK: - App Delegate
+
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var statusIcon: StatusIcon!
-    private var popover: NSPopover!
+    private var panel: PopoverPanel!
     private var watcher: SessionDirectoryWatcher!
     private var cancellables = Set<AnyCancellable>()
     private var eventMonitor: Any?
@@ -25,16 +77,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusIcon = StatusIcon(statusItem: statusItem)
 
-        // Setup popover
-        popover = NSPopover()
-        popover.contentSize = NSSize(width: 260, height: 300)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(
-            rootView: SessionListView(store: store)
-        )
+        // Setup panel (replaces NSPopover)
+        panel = PopoverPanel(contentView: SessionListView(store: store))
 
         // Setup click handler
-        statusItem.button?.action = #selector(togglePopover)
+        statusItem.button?.action = #selector(togglePanel)
         statusItem.button?.target = self
 
         // Observe state changes
@@ -43,7 +90,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { [weak self] counts in
                 self?.statusIcon.update(counts: counts)
                 if let prev = self?.previousCounts {
-                    NotificationService.shared.notify(oldCounts: prev, newCounts: counts)
+                    NotificationService.shared.notify(
+                        oldCounts: prev, newCounts: counts,
+                        sessions: store.sessions
+                    )
                 }
                 self?.previousCounts = counts
             }
@@ -55,17 +105,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             store?.reload()
         }
 
-        // Close popover when clicking outside
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            if let popover = self?.popover, popover.isShown {
-                popover.performClose(nil)
-            }
+        // Close panel when clicking outside (but not inside the panel itself)
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let panel = self?.panel, panel.isVisible else { return }
+
+            // Check if the click is inside the panel
+            let clickLocation = NSEvent.mouseLocation
+            if panel.frame.contains(clickLocation) { return }
+
+            panel.orderOut(nil)
         }
 
         // Listen for settings open request
         NotificationCenter.default.addObserver(
             self, selector: #selector(showSettings),
             name: .openSettings, object: nil
+        )
+
+        // Listen for panel close request
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(closePanel),
+            name: .closePopover, object: nil
         )
     }
 
@@ -76,22 +136,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    @objc private func togglePopover() {
+    @objc private func togglePanel() {
         guard let button = statusItem.button else { return }
 
-        if popover.isShown {
-            popover.performClose(nil)
+        if panel.isVisible {
+            panel.orderOut(nil)
         } else {
             StateStore.shared.reload()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            NSApp.activate(ignoringOtherApps: true)
+            panel.show(relativeTo: button)
+        }
+    }
+
+    @objc private func closePanel() {
+        if panel.isVisible {
+            panel.orderOut(nil)
         }
     }
 
     @objc private func showSettings() {
-        // Close popover first
-        if popover.isShown {
-            popover.performClose(nil)
-        }
+        // Close panel first
+        closePanel()
 
         if let window = settingsWindow {
             window.level = .floating

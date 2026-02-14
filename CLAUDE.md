@@ -32,6 +32,7 @@ claude-runner/
 │   │   ├── NotificationService.swift  # UNUserNotificationCenter wrapper for state alerts
 │   │   └── TerminalFocuser.swift   # Focuses terminal tab for a session
 │   └── Extensions/
+│       ├── BundleIdentifier+AppInfo.swift  # Bundle ID → app name/icon resolver
 │       ├── DesignTokens.swift      # Colors, dimensions, spacing constants
 │       └── NSImage+TrafficLight.swift  # Menu bar icon renderers (4 styles)
 ├── Scripts/
@@ -46,7 +47,8 @@ claude-runner/
 │   ├── TrafficLightTests.swift
 │   ├── AppSettingsTests.swift
 │   ├── LoginItemManagerTests.swift
-│   └── NotificationServiceTests.swift
+│   ├── NotificationServiceTests.swift
+│   └── AppInfoTests.swift
 └── Package.swift
 ```
 

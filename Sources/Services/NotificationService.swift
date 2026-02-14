@@ -3,7 +3,7 @@ import UserNotifications
 
 /// Protocol for notification sending, enabling test mocking.
 protocol NotificationSending {
-    func notify(oldCounts: StateCounts, newCounts: StateCounts)
+    func notify(oldCounts: StateCounts, newCounts: StateCounts, sessions: [SessionEntry])
 }
 
 /// Manages macOS user notifications for session state changes.
@@ -12,6 +12,7 @@ protocol NotificationSending {
 /// - permission count increases from 0 (needs approval)
 /// - waiting count increases from 0 (ready for input)
 /// Active-only changes are silent.
+/// Clicking a notification focuses the corresponding terminal app.
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate, NotificationSending {
     static let shared = NotificationService()
 
@@ -25,7 +26,6 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
     }
 
     /// Sets up notification delegate and requests permission. Call once at app launch.
-    /// Fails gracefully if UNUserNotificationCenter is unavailable (e.g. bare executable).
     func setup() {
         guard Bundle.main.bundleIdentifier != nil else { return }
         let unc = UNUserNotificationCenter.current()
@@ -38,7 +38,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
     }
 
     /// Compares old and new counts, sending a notification if a notable state change occurred.
-    func notify(oldCounts: StateCounts, newCounts: StateCounts) {
+    func notify(oldCounts: StateCounts, newCounts: StateCounts, sessions: [SessionEntry]) {
         guard settings.notifyOnStateChange else { return }
         guard oldCounts != newCounts else { return }
 
@@ -47,7 +47,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
             let body = newCounts.permissionCount == 1
                 ? "1 session needs approval"
                 : "\(newCounts.permissionCount) sessions need approval"
-            send(title: "Needs Approval", body: body)
+            let sessionId = sessions.first(where: { $0.state == .permission })?.sessionId
+            send(title: "Needs Approval", body: body, sessionId: sessionId)
             return
         }
 
@@ -56,18 +57,22 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
             let body = newCounts.waitingCount == 1
                 ? "1 session is waiting for input"
                 : "\(newCounts.waitingCount) sessions waiting for input"
-            send(title: "Waiting for Input", body: body)
+            let sessionId = sessions.first(where: { $0.state == .waiting })?.sessionId
+            send(title: "Waiting for Input", body: body, sessionId: sessionId)
             return
         }
     }
 
-    private func send(title: String, body: String) {
+    private func send(title: String, body: String, sessionId: String?) {
         // System notification (if available)
         if let center = center, isAvailable {
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = body
             content.sound = .default
+            if let sessionId = sessionId {
+                content.userInfo = ["sessionId": sessionId]
+            }
 
             let request = UNNotificationRequest(
                 identifier: UUID().uuidString,
@@ -90,5 +95,21 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound])
+    }
+
+    /// Handle notification click → focus the terminal app for the session.
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        if let sessionId = userInfo["sessionId"] as? String,
+           let session = StateStore.shared.sessions.first(where: { $0.sessionId == sessionId }) {
+            DispatchQueue.main.async {
+                TerminalFocuser.focus(session: session)
+            }
+        }
+        completionHandler()
     }
 }

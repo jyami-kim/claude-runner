@@ -229,4 +229,5 @@ struct IconPreview: NSViewRepresentable {
 
 extension Notification.Name {
     static let openSettings = Notification.Name("openSettings")
+    static let closePopover = Notification.Name("closePopover")
 }
