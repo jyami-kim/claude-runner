@@ -29,6 +29,7 @@ claude-runner/
 │   │   ├── HookInstaller.swift     # Installs hook script to ~/.claude/
 │   │   ├── SessionDirectoryWatcher.swift  # FSEvent-based directory watcher
 │   │   ├── LoginItemManager.swift  # SMAppService wrapper for launch-at-login
+│   │   ├── NotificationService.swift  # UNUserNotificationCenter wrapper for state alerts
 │   │   └── TerminalFocuser.swift   # Focuses terminal tab for a session
 │   └── Extensions/
 │       ├── DesignTokens.swift      # Colors, dimensions, spacing constants
@@ -44,7 +45,8 @@ claude-runner/
 │   ├── DesignTokensTests.swift
 │   ├── TrafficLightTests.swift
 │   ├── AppSettingsTests.swift
-│   └── LoginItemManagerTests.swift
+│   ├── LoginItemManagerTests.swift
+│   └── NotificationServiceTests.swift
 └── Package.swift
 ```
 

@@ -10,10 +10,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cancellables = Set<AnyCancellable>()
     private var eventMonitor: Any?
     private var settingsWindow: NSWindow?
+    private var previousCounts = StateCounts()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Install hook script on first launch
         HookInstaller.install()
+
+        // Setup notifications
+        NotificationService.shared.setup()
 
         let store = StateStore.shared
 
@@ -38,6 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] counts in
                 self?.statusIcon.update(counts: counts)
+                if let prev = self?.previousCounts {
+                    NotificationService.shared.notify(oldCounts: prev, newCounts: counts)
+                }
+                self?.previousCounts = counts
             }
             .store(in: &cancellables)
 
