@@ -27,7 +27,7 @@ enum DesignTokens {
 
     // MARK: - Menu Bar Icon Dimensions
 
-    static let iconWidth: CGFloat = 36
+    static let iconWidth: CGFloat = 44
     static let iconHeight: CGFloat = 18
     static let circleRadius: CGFloat = 5.0
     static let circleSpacing: CGFloat = 2.0

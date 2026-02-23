@@ -22,7 +22,7 @@ final class DesignTokensTests: XCTestCase {
     // MARK: - Dimension Constants
 
     func testIconDimensions() {
-        XCTAssertEqual(DesignTokens.iconWidth, 36)
+        XCTAssertEqual(DesignTokens.iconWidth, 44)
         XCTAssertEqual(DesignTokens.iconHeight, 18)
     }
 
