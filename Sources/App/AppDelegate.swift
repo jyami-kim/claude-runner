@@ -68,6 +68,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         HookInstaller.install()
         HookRegistrar.registerHooks()
 
+        // Check if jq is installed (required by hook script)
+        checkJqAvailability()
+
         // Setup notifications
         NotificationService.shared.setup()
 
@@ -152,6 +155,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if panel.isVisible {
             panel.orderOut(nil)
         }
+    }
+
+    private func checkJqAvailability() {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/which")
+        process.arguments = ["jq"]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+        do {
+            try process.run()
+            process.waitUntilExit()
+        } catch {
+            showJqAlert()
+            return
+        }
+        if process.terminationStatus != 0 {
+            showJqAlert()
+        }
+    }
+
+    private func showJqAlert() {
+        let alert = NSAlert()
+        alert.messageText = "jq가 설치되어 있지 않습니다"
+        alert.informativeText = "claude-runner의 hook 스크립트가 jq를 필요로 합니다. jq 없이는 세션 상태를 추적할 수 없습니다.\n\nbrew install jq 로 설치해주세요."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "확인")
+        alert.runModal()
     }
 
     @objc private func showSettings() {

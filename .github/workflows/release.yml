@@ -93,6 +93,7 @@ jobs:
             homepage "https://github.com/jyami-kim/claude-runner"
 
             depends_on macos: ">= :ventura"
+            depends_on formula: "jq"
 
             app "claude-runner.app"
 

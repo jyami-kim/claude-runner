@@ -73,7 +73,11 @@ brew install --no-quarantine jyami-kim/tap/claude-runner
 
 1. [최신 릴리스](https://github.com/jyami-kim/claude-runner/releases/latest)에서 `claude-runner-x.x.x.zip` 다운로드
 2. 압축 해제 후 `claude-runner.app`을 `/Applications/`로 이동
-3. Gatekeeper 격리 속성 제거 후 실행:
+3. `jq`가 설치되어 있어야 합니다 (hook 스크립트 의존성):
+   ```bash
+   brew install jq
+   ```
+4. Gatekeeper 격리 속성 제거 후 실행:
    ```bash
    xattr -cr /Applications/claude-runner.app
    open /Applications/claude-runner.app
@@ -82,6 +86,7 @@ brew install --no-quarantine jyami-kim/tap/claude-runner
 ### 소스 빌드
 
 ```bash
+brew install jq  # hook 스크립트 의존성
 git clone https://github.com/jyami-kim/claude-runner.git
 cd claude-runner
 ./install.sh
@@ -118,7 +123,7 @@ Claude Code Hook (shell script)
 
 ## 기술 스택
 
-- **Swift 5.9** + **SwiftUI** (외부 의존성 없음)
+- **Swift 5.9** + **SwiftUI** (외부 의존성: `jq`)
 - **Swift Package Manager** 빌드
 - **kqueue** (DispatchSource) 파일 감시
 - **NSAppleScript** 터미널 탭/창 전환
