@@ -15,20 +15,6 @@ INPUT=$(cat)
 HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
-# Map TERM_PROGRAM to bundle ID
-term_program_to_bundle_id() {
-    case "$1" in
-        iTerm.app) echo "com.googlecode.iterm2" ;;
-        Apple_Terminal) echo "com.apple.Terminal" ;;
-        vscode) echo "com.microsoft.VSCode" ;;
-        Hyper) echo "co.zeit.hyper" ;;
-        Alacritty) echo "org.alacritty" ;;
-        WarpTerminal) echo "dev.warp.Warp-Stable" ;;
-        kitty) echo "net.kovidgoyal.kitty" ;;
-        *) echo "" ;;
-    esac
-}
-
 # Find bundle ID by walking PPID chain from given PID
 find_bundle_id_from_pid() {
     local pid="$1"
@@ -71,17 +57,7 @@ detect_bundle_id() {
         return
     fi
 
-    # 2. Fast path: TERM_PROGRAM environment variable (preserved in tmux)
-    if [ -n "${TERM_PROGRAM:-}" ]; then
-        local bundle
-        bundle=$(term_program_to_bundle_id "$TERM_PROGRAM")
-        if [ -n "$bundle" ]; then
-            echo "$bundle"
-            return
-        fi
-    fi
-
-    # 3. tmux: find the attached client's terminal
+    # 2. tmux: find the attached client's terminal
     if [ -n "${TMUX:-}" ]; then
         local client_pid
         client_pid=$(tmux display-message -p '#{client_pid}' 2>/dev/null)
@@ -95,7 +71,7 @@ detect_bundle_id() {
         fi
     fi
 
-    # 4. Fallback: walk PPID chain from current process
+    # 3. Fallback: walk PPID chain from current process
     find_bundle_id_from_pid $$
 }
 
