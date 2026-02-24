@@ -62,7 +62,7 @@ struct SettingsView: View {
                 statusGuideRow(color: DesignTokens.yellowSwiftUI, title: "Waiting",
                                description: "Ready for your input")
                 statusGuideRow(color: DesignTokens.greenSwiftUI, title: "Working",
-                               description: "Claude is active")
+                               description: "Claude is running")
             }
         }
     }

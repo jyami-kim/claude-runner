@@ -67,6 +67,7 @@ claude-runner/
 8. **SessionListView** shows session rows with state dot, app icon, project path, app name, and elapsed time. Clicking a row focuses the terminal/IDE window via `TerminalFocuser`.
 9. **TerminalFocuser** focuses the correct window:
    - **iTerm2 / Terminal.app**: NSAppleScript with TTY matching (works in full-screen Spaces)
+   - **Ghostty / Warp**: lsof to find terminal PID from TTY, then Accessibility API to focus window
    - **JetBrains IDEs**: Toolbox CLI launcher (`idea`, `pycharm`, etc.) with project path
    - **Other apps**: `NSRunningApplication.activate()` fallback
 10. **NotificationService** sends alerts for permission/waiting state changes. Clicking a notification focuses the session's terminal app.
@@ -100,3 +101,4 @@ The app automatically installs the hook script and registers hooks in `~/.claude
 - **Notifications:** `notifyOnStateChange` setting controls whether state change notifications are shown. Clicking a notification focuses the session's terminal app.
 - **Terminal focus:** AppleScript runs via `NSAppleScript` (in-process, not external `osascript`). Tab/window selection must happen before `activate` to work correctly in full-screen Spaces.
 - **JetBrains focus:** Uses `~/Library/Application Support/JetBrains/Toolbox/scripts/` CLI launchers. Bundle ID → tool name mapping in `TerminalFocuser.jetBrainsTools`.
+- **Ghostty / Warp focus:** Uses `lsof` to find the terminal PID that owns the session's TTY, then Accessibility API (`AXUIElement`) to raise and focus the window. No window title configuration required.

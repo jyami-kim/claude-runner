@@ -15,9 +15,23 @@ INPUT=$(cat)
 HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
-# Detect parent terminal/IDE bundle ID by walking the PPID chain
-detect_bundle_id() {
-    local pid=$$
+# Map TERM_PROGRAM to bundle ID
+term_program_to_bundle_id() {
+    case "$1" in
+        iTerm.app) echo "com.googlecode.iterm2" ;;
+        Apple_Terminal) echo "com.apple.Terminal" ;;
+        vscode) echo "com.microsoft.VSCode" ;;
+        Hyper) echo "co.zeit.hyper" ;;
+        Alacritty) echo "org.alacritty" ;;
+        WarpTerminal) echo "dev.warp.Warp-Stable" ;;
+        kitty) echo "net.kovidgoyal.kitty" ;;
+        *) echo "" ;;
+    esac
+}
+
+# Find bundle ID by walking PPID chain from given PID
+find_bundle_id_from_pid() {
+    local pid="$1"
     while [ "$pid" -gt 1 ] 2>/dev/null; do
         pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d ' ')
         [ -z "$pid" ] || [ "$pid" -le 1 ] 2>/dev/null && break
@@ -47,6 +61,42 @@ detect_bundle_id() {
         fi
     done
     echo ""
+}
+
+# Detect parent terminal/IDE bundle ID with tmux support
+detect_bundle_id() {
+    # 1. Fast path: iTerm2-specific environment variable
+    if [ -n "${ITERM_SESSION_ID:-}" ]; then
+        echo "com.googlecode.iterm2"
+        return
+    fi
+
+    # 2. Fast path: TERM_PROGRAM environment variable (preserved in tmux)
+    if [ -n "${TERM_PROGRAM:-}" ]; then
+        local bundle
+        bundle=$(term_program_to_bundle_id "$TERM_PROGRAM")
+        if [ -n "$bundle" ]; then
+            echo "$bundle"
+            return
+        fi
+    fi
+
+    # 3. tmux: find the attached client's terminal
+    if [ -n "${TMUX:-}" ]; then
+        local client_pid
+        client_pid=$(tmux display-message -p '#{client_pid}' 2>/dev/null)
+        if [ -n "$client_pid" ] && [ "$client_pid" -gt 1 ] 2>/dev/null; then
+            local bundle
+            bundle=$(find_bundle_id_from_pid "$client_pid")
+            if [ -n "$bundle" ]; then
+                echo "$bundle"
+                return
+            fi
+        fi
+    fi
+
+    # 4. Fallback: walk PPID chain from current process
+    find_bundle_id_from_pid $$
 }
 
 TERMINAL_BUNDLE_ID=$(detect_bundle_id)
