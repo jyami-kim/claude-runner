@@ -76,10 +76,10 @@ When there are multiple sessions, a number badge appears on the corresponding co
 ### Homebrew (Recommended)
 
 ```bash
-brew install --no-quarantine jyami-kim/tap/claude-runner
+brew install jyami-kim/tap/claude-runner
 ```
 
-> The `--no-quarantine` flag prevents macOS Gatekeeper warnings. This app is ad-hoc signed without an Apple Developer certificate, so installing without the flag may show a "cannot verify for malware" warning.
+> If Gatekeeper shows a warning on first launch: go to **System Settings → Privacy & Security → "Open Anyway"**. This app is ad-hoc signed without an Apple Developer certificate.
 
 ### Manual Download
 

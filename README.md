@@ -76,10 +76,10 @@
 ### Homebrew (권장)
 
 ```bash
-brew install --no-quarantine jyami-kim/tap/claude-runner
+brew install jyami-kim/tap/claude-runner
 ```
 
-> `--no-quarantine` 플래그는 macOS Gatekeeper 경고를 방지합니다. 이 앱은 Apple Developer 인증서 없이 ad-hoc 서명되어 있어 플래그 없이 설치하면 "악성코드를 확인할 수 없습니다" 경고가 나타날 수 있습니다.
+> 첫 실행 시 Gatekeeper 경고가 나타나면: **시스템 설정 → 개인정보 보호 및 보안 → "확인 없이 열기"** 를 클릭하세요. 이 앱은 Apple Developer 인증서 없이 ad-hoc 서명되어 있습니다.
 
 ### 수동 다운로드
 
