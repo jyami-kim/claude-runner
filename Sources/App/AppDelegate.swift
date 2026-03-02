@@ -37,11 +37,12 @@ final class PopoverPanel: NSPanel {
             button.convert(button.bounds, to: nil)
         )
 
-        // Size to fit content
+        // Size to fit content, capped at 80% of screen height
         contentViewController?.view.layoutSubtreeIfNeeded()
         let size = contentViewController?.view.fittingSize ?? NSSize(width: 260, height: 300)
         let panelWidth = max(size.width, 260)
-        let panelHeight = min(size.height, 400)
+        let maxHeight = (NSScreen.main?.visibleFrame.height ?? 600) * 0.8
+        let panelHeight = min(size.height, maxHeight)
 
         let x = buttonRect.midX - panelWidth / 2
         let y = buttonRect.minY - panelHeight

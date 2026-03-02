@@ -23,50 +23,53 @@ struct SessionListView: View {
                     .padding(.vertical, 16)
                     .frame(maxWidth: .infinity, alignment: .center)
             } else {
-                ScrollView {
-                    VStack(spacing: 0) {
-                        ForEach(store.sessions) { session in
-                            SessionRow(session: session)
-                        }
+                VStack(spacing: 0) {
+                    ForEach(store.sessions) { session in
+                        SessionRow(session: session)
                     }
                 }
-                .frame(maxHeight: 300)
             }
 
             Divider()
 
             // Footer
-            HStack {
-                Button(action: openSettings) {
-                    Label("Settings", systemImage: "gear")
-                        .font(.system(size: 11))
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.secondary)
-
-                Spacer()
-
-                Button(action: { store.reviveSessions() }) {
-                    Label("Revive", systemImage: "arrow.counterclockwise")
-                        .font(.system(size: 11))
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.secondary)
-                .help("Scan terminals for orphaned Claude sessions")
-
-                Spacer()
-
-                Button(action: quitApp) {
-                    HStack(spacing: 2) {
-                        Text("\u{2318}")
-                            .font(.system(size: 10))
-                        Text("Quit")
+            VStack(spacing: 4) {
+                HStack {
+                    Button(action: openSettings) {
+                        Label("Settings", systemImage: "gear")
                             .font(.system(size: 11))
                     }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.secondary)
+
+                    Spacer()
+
+                    Button(action: { store.reviveSessions() }) {
+                        Label("Recover", systemImage: "arrow.counterclockwise")
+                            .font(.system(size: 11))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.secondary)
+
+                    Spacer()
+
+                    Button(action: quitApp) {
+                        HStack(spacing: 2) {
+                            Text("\u{2318}")
+                                .font(.system(size: 10))
+                            Text("Quit")
+                                .font(.system(size: 11))
+                        }
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundColor(.secondary)
+                    .keyboardShortcut("q", modifiers: .command)
                 }
-                .buttonStyle(.plain)
-                .foregroundColor(.secondary)
-                .keyboardShortcut("q", modifiers: .command)
+
+                Text("Recover: scan terminals for sessions lost by timeout or restart")
+                    .font(.system(size: 9))
+                    .foregroundColor(.secondary.opacity(0.7))
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

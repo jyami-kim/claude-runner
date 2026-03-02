@@ -61,11 +61,11 @@ struct SettingsView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 statusGuideRow(color: DesignTokens.redSwiftUI, title: "Needs Approval",
-                               description: "Permission or response required")
+                               description: "Tool permission or user response required")
                 statusGuideRow(color: DesignTokens.yellowSwiftUI, title: "Waiting",
-                               description: "Ready for your input")
-                statusGuideRow(color: DesignTokens.greenSwiftUI, title: "Working",
-                               description: "Claude is active")
+                               description: "Task complete, waiting for your next prompt")
+                statusGuideRow(color: DesignTokens.greenSwiftUI, title: "Running",
+                               description: "Claude is working on your task")
             }
         }
     }
@@ -206,7 +206,7 @@ struct SettingsView: View {
                 .font(.system(size: 12))
             }
 
-            Text("Waiting sessions older than this are automatically removed.")
+            Text("🟡 Waiting sessions older than this are automatically removed.")
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
 

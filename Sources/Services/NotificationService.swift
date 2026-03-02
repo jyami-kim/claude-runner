@@ -45,8 +45,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
         if newCounts.permissionCount > 0 && newCounts.permissionCount > oldCounts.permissionCount {
             let session = sessions.first(where: { $0.state == .permission })
             var body = newCounts.permissionCount == 1
-                ? "1 session needs approval"
-                : "\(newCounts.permissionCount) sessions need approval"
+                ? "1 session needs tool permission"
+                : "\(newCounts.permissionCount) sessions need tool permission"
             if let activity = session?.activityText {
                 body += "\n\(activity)"
             }
@@ -58,8 +58,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
         if newCounts.waitingCount > 0 && newCounts.waitingCount > oldCounts.waitingCount {
             let session = sessions.first(where: { $0.state == .waiting })
             var body = newCounts.waitingCount == 1
-                ? "1 session is waiting for input"
-                : "\(newCounts.waitingCount) sessions waiting for input"
+                ? "1 session finished, waiting for your next prompt"
+                : "\(newCounts.waitingCount) sessions finished, waiting for prompts"
             if let activity = session?.activityText {
                 body += "\n\(activity)"
             }
