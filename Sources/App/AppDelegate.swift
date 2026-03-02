@@ -178,10 +178,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showJqAlert() {
         let alert = NSAlert()
-        alert.messageText = "jq가 설치되어 있지 않습니다"
-        alert.informativeText = "claude-runner의 hook 스크립트가 jq를 필요로 합니다. jq 없이는 세션 상태를 추적할 수 없습니다.\n\nbrew install jq 로 설치해주세요."
+        alert.messageText = Strings.jqAlertTitle
+        alert.informativeText = Strings.jqAlertMessage
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "확인")
+        alert.addButton(withTitle: Strings.ok)
         alert.runModal()
     }
 
@@ -199,9 +199,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let hostingController = NSHostingController(rootView: SettingsView())
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "claude-runner Settings"
+        window.title = Strings.settingsWindowTitle
         window.styleMask = [.titled, .closable]
-        window.setContentSize(NSSize(width: 360, height: 520))
+        window.setContentSize(NSSize(width: 360, height: 560))
         window.center()
         window.isReleasedWhenClosed = false
         window.level = .floating

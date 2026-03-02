@@ -45,12 +45,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
         if newCounts.permissionCount > 0 && newCounts.permissionCount > oldCounts.permissionCount {
             let session = sessions.first(where: { $0.state == .permission })
             var body = newCounts.permissionCount == 1
-                ? "1 session needs tool permission"
-                : "\(newCounts.permissionCount) sessions need tool permission"
+                ? Strings.notifPermissionSingle
+                : Strings.notifPermissionPlural(newCounts.permissionCount)
             if let activity = session?.activityText {
                 body += "\n\(activity)"
             }
-            send(title: "Needs Approval", body: body, sessionId: session?.sessionId)
+            send(title: Strings.notifPermissionTitle, body: body, sessionId: session?.sessionId)
             return
         }
 
@@ -58,12 +58,12 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
         if newCounts.waitingCount > 0 && newCounts.waitingCount > oldCounts.waitingCount {
             let session = sessions.first(where: { $0.state == .waiting })
             var body = newCounts.waitingCount == 1
-                ? "1 session finished, waiting for your next prompt"
-                : "\(newCounts.waitingCount) sessions finished, waiting for prompts"
+                ? Strings.notifWaitingSingle
+                : Strings.notifWaitingPlural(newCounts.waitingCount)
             if let activity = session?.activityText {
                 body += "\n\(activity)"
             }
-            send(title: "Waiting for Input", body: body, sessionId: session?.sessionId)
+            send(title: Strings.notifWaitingTitle, body: body, sessionId: session?.sessionId)
             return
         }
     }

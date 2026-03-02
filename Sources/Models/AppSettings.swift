@@ -10,6 +10,21 @@ enum IconStyle: String, CaseIterable {
     case textCounter
 }
 
+// MARK: - App Language
+
+/// In-app language selection (independent of system language)
+enum AppLanguage: String, CaseIterable {
+    case english = "en"
+    case korean = "ko"
+
+    var displayName: String {
+        switch self {
+        case .english: return "English"
+        case .korean: return "한국어"
+        }
+    }
+}
+
 // MARK: - Session Display Format
 
 /// How session paths are displayed in the popover
@@ -31,4 +46,5 @@ final class AppSettings: ObservableObject {
     @AppStorage("sessionDisplayFormat") var sessionDisplayFormat: SessionDisplayFormat = .fullPath
     @AppStorage("showTaskMessage") var showTaskMessage: Bool = true
     @AppStorage("staleTimeoutMinutes") var staleTimeoutMinutes: Int = 10
+    @AppStorage("appLanguage") var appLanguage: AppLanguage = .english
 }

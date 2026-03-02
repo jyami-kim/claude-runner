@@ -19,17 +19,17 @@ struct SettingsView: View {
             }
             .padding(20)
         }
-        .frame(width: 360, height: 520)
+        .frame(width: 360, height: 560)
     }
 
     // MARK: - General
 
     private var generalSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("General")
+            Text(Strings.general)
                 .font(.system(size: 13, weight: .semibold))
 
-            Toggle("Launch at Login", isOn: $settings.launchAtLogin)
+            Toggle(Strings.launchAtLogin, isOn: $settings.launchAtLogin)
                 .font(.system(size: 12))
                 .onChange(of: settings.launchAtLogin) { newValue in
                     do {
@@ -44,11 +44,22 @@ struct SettingsView: View {
                     }
                 }
 
-            Toggle("Notify on State Change", isOn: $settings.notifyOnStateChange)
+            Toggle(Strings.notifyOnStateChange, isOn: $settings.notifyOnStateChange)
                 .font(.system(size: 12))
 
-            Toggle("Show Task Message", isOn: $settings.showTaskMessage)
-                .font(.system(size: 12))
+            HStack {
+                Text(Strings.language)
+                    .font(.system(size: 12))
+                Spacer()
+                Picker(Strings.language, selection: $settings.appLanguage) {
+                    ForEach(AppLanguage.allCases, id: \.self) { lang in
+                        Text(lang.displayName).tag(lang)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 160)
+            }
         }
     }
 
@@ -56,32 +67,35 @@ struct SettingsView: View {
 
     private var statusGuideSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Status Guide")
+            Text(Strings.statusGuide)
                 .font(.system(size: 13, weight: .semibold))
 
             VStack(alignment: .leading, spacing: 8) {
-                statusGuideRow(color: DesignTokens.redSwiftUI, title: "Needs Approval",
-                               description: "Tool permission or user response required")
-                statusGuideRow(color: DesignTokens.yellowSwiftUI, title: "Waiting",
-                               description: "Task complete, waiting for your next prompt")
-                statusGuideRow(color: DesignTokens.greenSwiftUI, title: "Running",
-                               description: "Claude is working on your task")
+                statusGuideRow(color: DesignTokens.redSwiftUI, title: Strings.needsApproval,
+                               description: Strings.needsApprovalDesc)
+                statusGuideRow(color: DesignTokens.yellowSwiftUI, title: Strings.waiting,
+                               description: Strings.waitingDesc)
+                statusGuideRow(color: DesignTokens.greenSwiftUI, title: Strings.running,
+                               description: Strings.runningDesc)
             }
         }
     }
 
     private func statusGuideRow(color: Color, title: String, description: String) -> some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             Circle()
                 .fill(color)
                 .frame(width: 8, height: 8)
+                .padding(.top, 3)
 
-            Text(title)
-                .font(.system(size: 12, weight: .medium))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
 
-            Text("— \(description)")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
+                Text(description)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
         }
     }
 
@@ -89,7 +103,7 @@ struct SettingsView: View {
 
     private var menuBarIconSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Menu Bar Icon")
+            Text(Strings.menuBarIcon)
                 .font(.system(size: 13, weight: .semibold))
 
             // Preview strip
@@ -97,10 +111,10 @@ struct SettingsView: View {
 
             // 2x2 grid
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                iconCard(style: .trafficLight, name: "Traffic Light")
-                iconCard(style: .pieChart, name: "Pie Chart")
-                iconCard(style: .domino, name: "Domino")
-                iconCard(style: .textCounter, name: "Text Counter")
+                iconCard(style: .trafficLight, name: Strings.trafficLight)
+                iconCard(style: .pieChart, name: Strings.pieChart)
+                iconCard(style: .domino, name: Strings.domino)
+                iconCard(style: .textCounter, name: Strings.textCounter)
             }
         }
     }
@@ -153,24 +167,33 @@ struct SettingsView: View {
 
     private var sessionDisplaySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Session Display")
+            Text(Strings.sessionDisplay)
                 .font(.system(size: 13, weight: .semibold))
 
-            Picker("Path Format", selection: $settings.sessionDisplayFormat) {
-                Text("Full Path").tag(SessionDisplayFormat.fullPath)
-                Text("Directory Only").tag(SessionDisplayFormat.directoryOnly)
-                Text("Last Two Dirs").tag(SessionDisplayFormat.lastTwoDirs)
-            }
-            .pickerStyle(.segmented)
+            Toggle(Strings.showTaskMessage, isOn: $settings.showTaskMessage)
+                .font(.system(size: 12))
 
-            // Preview
-            Text(previewPath)
-                .font(.system(size: 11, design: .monospaced))
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.primary.opacity(0.03))
-                .cornerRadius(4)
+            VStack(alignment: .leading, spacing: 8) {
+                Text(Strings.pathFormat)
+                    .font(.system(size: 12))
+
+                Picker(Strings.pathFormat, selection: $settings.sessionDisplayFormat) {
+                    Text(Strings.full).tag(SessionDisplayFormat.fullPath)
+                    Text(Strings.dirOnly).tag(SessionDisplayFormat.directoryOnly)
+                    Text(Strings.lastTwoDirs).tag(SessionDisplayFormat.lastTwoDirs)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+
+                Text(previewPath)
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.primary.opacity(0.03))
+                    .cornerRadius(4)
+            }
         }
     }
 
@@ -191,24 +214,36 @@ struct SettingsView: View {
 
     private var advancedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Advanced")
+            Text(Strings.advanced)
                 .font(.system(size: 13, weight: .semibold))
 
             HStack {
-                Text("Stale Session Timeout")
+                Text(Strings.staleSessionTimeout)
                     .font(.system(size: 12))
                 Spacer()
                 Stepper(
-                    "\(settings.staleTimeoutMinutes) min",
+                    "\(settings.staleTimeoutMinutes) \(Strings.min)",
                     value: $settings.staleTimeoutMinutes,
                     in: 1...60
                 )
                 .font(.system(size: 12))
             }
 
-            Text("🟡 Waiting sessions older than this are automatically removed.")
+            Text(Strings.staleTimeoutDesc)
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
+
+            Divider()
+                .padding(.top, 4)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(Strings.recoverTitle)
+                    .font(.system(size: 12, weight: .medium))
+
+                Text(Strings.recoverDesc)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
 
             Divider()
                 .padding(.top, 4)
@@ -216,16 +251,16 @@ struct SettingsView: View {
             Button(role: .destructive) {
                 showUninstallConfirm = true
             } label: {
-                Text("Uninstall claude-runner…")
+                Text(Strings.uninstall)
                     .font(.system(size: 12))
             }
-            .alert("Uninstall claude-runner?", isPresented: $showUninstallConfirm) {
-                Button("Cancel", role: .cancel) {}
-                Button("Uninstall", role: .destructive) {
+            .alert(Strings.uninstallConfirmTitle, isPresented: $showUninstallConfirm) {
+                Button(Strings.cancel, role: .cancel) {}
+                Button(Strings.uninstall, role: .destructive) {
                     performUninstall()
                 }
             } message: {
-                Text("Hooks will be removed from ~/.claude/settings.json and session data will be deleted. The app will quit afterwards — delete it from /Applications manually.")
+                Text(Strings.uninstallConfirmMessage)
             }
         }
     }

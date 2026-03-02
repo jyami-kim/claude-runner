@@ -20,12 +20,12 @@ final class StatusIcon {
         // Accessibility description
         let total = counts.totalCount
         if total == 0 {
-            statusItem.button?.toolTip = "claude-runner: No active sessions"
+            statusItem.button?.toolTip = Strings.noActiveSessionsTooltip
         } else {
             var parts: [String] = []
-            if counts.permissionCount > 0 { parts.append("\(counts.permissionCount) permission") }
-            if counts.waitingCount > 0 { parts.append("\(counts.waitingCount) waiting") }
-            if counts.activeCount > 0 { parts.append("\(counts.activeCount) active") }
+            if counts.permissionCount > 0 { parts.append("\(counts.permissionCount) \(Strings.permission)") }
+            if counts.waitingCount > 0 { parts.append("\(counts.waitingCount) \(Strings.waitingTooltip)") }
+            if counts.activeCount > 0 { parts.append("\(counts.activeCount) \(Strings.active)") }
             statusItem.button?.toolTip = "claude-runner: \(parts.joined(separator: ", "))"
         }
     }

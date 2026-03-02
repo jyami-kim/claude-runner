@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SessionListView: View {
     @ObservedObject var store: StateStore
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -16,7 +17,7 @@ struct SessionListView: View {
             Divider()
 
             if store.sessions.isEmpty {
-                Text("No active sessions")
+                Text(Strings.noActiveSessions)
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .padding(.horizontal, 12)
@@ -33,43 +34,36 @@ struct SessionListView: View {
             Divider()
 
             // Footer
-            VStack(spacing: 4) {
-                HStack {
-                    Button(action: openSettings) {
-                        Label("Settings", systemImage: "gear")
-                            .font(.system(size: 11))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    Button(action: { store.reviveSessions() }) {
-                        Label("Recover", systemImage: "arrow.counterclockwise")
-                            .font(.system(size: 11))
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.secondary)
-
-                    Spacer()
-
-                    Button(action: quitApp) {
-                        HStack(spacing: 2) {
-                            Text("\u{2318}")
-                                .font(.system(size: 10))
-                            Text("Quit")
-                                .font(.system(size: 11))
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundColor(.secondary)
-                    .keyboardShortcut("q", modifiers: .command)
+            HStack {
+                Button(action: openSettings) {
+                    Label(Strings.settings, systemImage: "gear")
+                        .font(.system(size: 11))
                 }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
 
-                Text("Recover: scan terminals for sessions lost by timeout or restart")
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary.opacity(0.7))
-                    .frame(maxWidth: .infinity, alignment: .center)
+                Spacer()
+
+                Button(action: { store.reviveSessions() }) {
+                    Label(Strings.recover, systemImage: "arrow.counterclockwise")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+
+                Spacer()
+
+                Button(action: quitApp) {
+                    HStack(spacing: 2) {
+                        Text("\u{2318}")
+                            .font(.system(size: 10))
+                        Text(Strings.quit)
+                            .font(.system(size: 11))
+                    }
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+                .keyboardShortcut("q", modifiers: .command)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)

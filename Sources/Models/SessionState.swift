@@ -92,7 +92,7 @@ struct SessionEntry: Codable, Identifiable {
     /// - no data → nil
     var activityText: String? {
         if state == .active, let activity = currentActivity, !activity.isEmpty {
-            return "Using \(activity)"
+            return Strings.using(activity)
         }
         if (state == .waiting || state == .permission),
            let message = lastMessage, !message.isEmpty {
@@ -148,13 +148,15 @@ final class StateStore: ObservableObject {
 
     private let sessionsDirectory: URL
     private let decoder: JSONDecoder
-    let staleThreshold: TimeInterval
+    private var _staleThresholdOverride: TimeInterval?
+    var staleThreshold: TimeInterval {
+        _staleThresholdOverride ?? TimeInterval(AppSettings.shared.staleTimeoutMinutes * 60)
+    }
     private var stalenessTimer: Timer?
 
     init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         sessionsDirectory = appSupport.appendingPathComponent("claude-runner/sessions", isDirectory: true)
-        staleThreshold = TimeInterval(AppSettings.shared.staleTimeoutMinutes * 60)
 
         decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
@@ -172,7 +174,7 @@ final class StateStore: ObservableObject {
     /// Testable initializer with custom directory
     init(sessionsDirectory: URL, staleThreshold: TimeInterval = 600, autoReload: Bool = true) {
         self.sessionsDirectory = sessionsDirectory
-        self.staleThreshold = staleThreshold
+        self._staleThresholdOverride = staleThreshold
 
         decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601

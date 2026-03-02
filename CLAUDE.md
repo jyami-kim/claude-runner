@@ -20,7 +20,8 @@ claude-runner/
 │   │   └── AppDelegate.swift       # NSStatusItem, PopoverPanel (NSPanel), watcher setup
 │   ├── Models/
 │   │   ├── SessionState.swift      # SessionState enum, SessionEntry, StateCounts, StateStore
-│   │   └── AppSettings.swift       # @AppStorage settings, IconStyle, SessionDisplayFormat enums
+│   │   ├── AppSettings.swift       # @AppStorage settings, IconStyle, SessionDisplayFormat, AppLanguage enums
+│   │   └── Strings.swift           # Centralized UI strings (Korean + English)
 │   ├── Views/
 │   │   ├── SessionListView.swift   # Panel content: session list + session row + Revive button
 │   │   ├── SettingsView.swift      # Settings window UI (5 sections)
@@ -81,7 +82,7 @@ claude-runner/
    - **WindowTitleFocuser**: System Events window title matching (Ghostty, Warp)
    - **DefaultFocuser**: `NSRunningApplication.activate()` fallback
 10. **NotificationService** sends alerts for permission/waiting state changes with activity context. Clicking a notification focuses the session's terminal app.
-11. **SettingsView** provides a settings window with General (launch at login, notifications, task message toggle), Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
+11. **SettingsView** provides a settings window with General (launch at login, notifications, language selector), Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
 12. **SessionScanner** scans running `claude` processes via `pgrep`/`ps`/`lsof` to discover orphaned sessions not tracked by session files. Used by `StateStore.reviveSessions()`.
 
 ## Build & Test
@@ -117,3 +118,4 @@ The app automatically installs the hook script and registers hooks in `~/.claude
 - **tmux support:** Hook script detects tmux via `$TMUX` env var and falls back to `tmux display-message` for client PID/TTY.
 - **Session revive:** `SessionScanner` discovers orphaned Claude processes and creates synthetic session files (prefixed `revived-`). These are naturally replaced when real hook events arrive. Scanner detects bundle IDs via PPID chain with Info.plist fallback, and resolves tmux pane TTYs to real terminal client TTYs.
 - **Hook TTY cleanup:** Every hook event (not just SessionStart) cleans up other session files sharing the same TTY. This ensures revived sessions are replaced when real hook events arrive.
+- **Localization:** All UI strings are managed via the `Strings` enum (`Sources/Models/Strings.swift`). Supports Korean and English, selectable in Settings → General → Language. Uses `AppLanguage` enum stored in `@AppStorage("appLanguage")`. To add a new string: add a computed property to `Strings` with both language variants. No `.lproj` files — intentionally app-level control independent of system language.
