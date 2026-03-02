@@ -42,6 +42,9 @@ git push
 - GitHub Actions `release.yml`이 자동으로:
   1. Universal binary 빌드 (arm64 + x86_64)
   2. GitHub Release 생성 (zip 첨부)
+     - Release 본문에 Install / Update / Manual Install / SHA256 섹션 포함
+     - Update 섹션에 `brew update && brew upgrade claude-runner` 명령어 안내
+     - 이미 실행 중인 경우 재시작 필요 안내 포함
   3. Homebrew cask 업데이트 (`jyami-kim/homebrew-tap`)
     - postflight: quarantine 속성 제거 + 앱 자동 재실행
 - Release CI 완료까지 대기 후 결과 보고

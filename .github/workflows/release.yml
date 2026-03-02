@@ -61,12 +61,24 @@ jobs:
 
             ```bash
             brew install jyami-kim/tap/claude-runner
+            ```
 
-            # Manual
+            ### Update
+
+            ```bash
+            brew update && brew upgrade claude-runner
+            ```
+
+            > ⚠️ claude-runner가 이미 실행 중이라면, 업그레이드 후 앱을 종료하고 다시 실행해주세요.
+            > `brew upgrade` 중 앱이 자동 종료되지만, 새 버전이 반영되려면 재실행이 필요합니다.
+
+            ### Manual Install
+
+            ```bash
             # 1. Download claude-runner-${{ steps.version.outputs.VERSION }}.zip
             # 2. Extract and move claude-runner.app to /Applications/
-            # 3. xattr -cr /Applications/claude-runner.app
-            # 4. open /Applications/claude-runner.app
+            xattr -cr /Applications/claude-runner.app
+            open /Applications/claude-runner.app
             ```
 
             ### SHA256
