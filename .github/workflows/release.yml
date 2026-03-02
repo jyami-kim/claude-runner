@@ -74,12 +74,11 @@ jobs:
 
             ### Manual Install
 
-            ```bash
-            # 1. Download claude-runner-${{ steps.version.outputs.VERSION }}.zip
-            # 2. Extract and move claude-runner.app to /Applications/
-            xattr -cr /Applications/claude-runner.app
-            open /Applications/claude-runner.app
-            ```
+            1. Download `claude-runner-${{ steps.version.outputs.VERSION }}.zip`
+            2. Extract and move `claude-runner.app` to `/Applications/`
+            3. `open /Applications/claude-runner.app`
+
+            > ⚠️ Gatekeeper may show a warning on first launch. Go to **System Settings → Privacy & Security → "Open Anyway"**.
 
             ### SHA256
             ```

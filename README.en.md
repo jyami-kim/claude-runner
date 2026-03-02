@@ -79,8 +79,6 @@ When there are multiple sessions, a number badge appears on the corresponding co
 brew install jyami-kim/tap/claude-runner
 ```
 
-> If Gatekeeper shows a warning on first launch: go to **System Settings → Privacy & Security → "Open Anyway"**. This app is ad-hoc signed without an Apple Developer certificate.
-
 ### Manual Download
 
 1. Download `claude-runner-x.x.x.zip` from the [latest release](https://github.com/jyami-kim/claude-runner/releases/latest)
@@ -89,9 +87,8 @@ brew install jyami-kim/tap/claude-runner
    ```bash
    brew install jq
    ```
-4. Remove the Gatekeeper quarantine attribute and launch:
+4. Launch the app:
    ```bash
-   xattr -cr /Applications/claude-runner.app
    open /Applications/claude-runner.app
    ```
 
@@ -106,6 +103,8 @@ open /Applications/claude-runner.app
 ```
 
 > The app automatically installs the hook script and registers it in `~/.claude/settings.json` on first launch. No additional setup required.
+
+> ⚠️ Gatekeeper may show a warning on first launch. Go to **System Settings → Privacy & Security → "Open Anyway"**. This app is ad-hoc signed without an Apple Developer certificate, so macOS may flag it as an unverified app.
 
 ### Uninstall
 

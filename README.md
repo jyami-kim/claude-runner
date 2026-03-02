@@ -79,8 +79,6 @@
 brew install jyami-kim/tap/claude-runner
 ```
 
-> 첫 실행 시 Gatekeeper 경고가 나타나면: **시스템 설정 → 개인정보 보호 및 보안 → "확인 없이 열기"** 를 클릭하세요. 이 앱은 Apple Developer 인증서 없이 ad-hoc 서명되어 있습니다.
-
 ### 수동 다운로드
 
 1. [최신 릴리스](https://github.com/jyami-kim/claude-runner/releases/latest)에서 `claude-runner-x.x.x.zip` 다운로드
@@ -89,9 +87,8 @@ brew install jyami-kim/tap/claude-runner
    ```bash
    brew install jq
    ```
-4. Gatekeeper 격리 속성 제거 후 실행:
+4. 앱 실행:
    ```bash
-   xattr -cr /Applications/claude-runner.app
    open /Applications/claude-runner.app
    ```
 
@@ -106,6 +103,8 @@ open /Applications/claude-runner.app
 ```
 
 > 앱이 첫 실행 시 자동으로 Hook 스크립트를 설치하고 `~/.claude/settings.json`에 등록합니다. 별도 설정 불필요.
+
+> ⚠️ 첫 실행 시 Gatekeeper 경고가 나타날 수 있습니다. **시스템 설정 → 개인정보 보호 및 보안 → "확인 없이 열기"** 를 클릭하세요. 이 앱은 Apple Developer 인증서 없이 ad-hoc 서명되어 있어 macOS가 확인되지 않은 앱으로 표시할 수 있습니다.
 
 ### 제거
 
