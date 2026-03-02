@@ -38,7 +38,6 @@ claude-runner/
 │   │       ├── ITermFocuser.swift         # iTerm2 AppleScript TTY matching
 │   │       ├── TerminalAppFocuser.swift   # Terminal.app AppleScript TTY matching
 │   │       ├── JetBrainsFocuser.swift     # Toolbox CLI + worktree resolution
-│   │       ├── WindowTitleFocuser.swift   # System Events window title matching (Ghostty, Warp)
 │   │       └── DefaultFocuser.swift       # NSRunningApplication fallback
 │   └── Extensions/
 │       ├── BundleIdentifier+AppInfo.swift  # Bundle ID → app name/icon resolver
@@ -79,8 +78,7 @@ claude-runner/
    - **ITermFocuser**: iTerm2 AppleScript TTY matching
    - **TerminalAppFocuser**: Terminal.app AppleScript TTY matching
    - **JetBrainsFocuser**: Toolbox CLI launcher with git worktree resolution
-   - **WindowTitleFocuser**: System Events window title matching (Ghostty, Warp)
-   - **DefaultFocuser**: `NSRunningApplication.activate()` fallback
+   - **DefaultFocuser**: `NSRunningApplication.activate()` fallback (Ghostty, Warp, etc.)
 10. **NotificationService** sends alerts for permission/waiting state changes with activity context. Clicking a notification focuses the session's terminal app.
 11. **SettingsView** provides a settings window with General (launch at login, notifications, language selector), Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
 12. **SessionScanner** scans running `claude` processes via `pgrep`/`ps`/`lsof` to discover orphaned sessions not tracked by session files. Used by `StateStore.reviveSessions()`.
@@ -114,7 +112,6 @@ The app automatically installs the hook script and registers hooks in `~/.claude
 - **Task messages:** `showTaskMessage` setting controls whether activity text (current tool, last message) is shown in session rows. Enabled by default.
 - **Terminal focus:** Uses `TerminalFocusStrategy` protocol. Each terminal type has its own focuser struct in `Sources/Services/Focusers/`. To add a new terminal, create a new struct conforming to the protocol and register it in `TerminalFocuser.strategies`.
 - **JetBrains focus:** Uses `~/Library/Application Support/JetBrains/Toolbox/scripts/` CLI launchers. Bundle ID → tool name mapping in `JetBrainsFocuser.jetBrainsTools`. Supports git worktree resolution via `.git` file parsing.
-- **Ghostty/Warp focus:** Uses System Events AppleScript for window title matching. Requires Accessibility permission.
 - **tmux support:** Hook script detects tmux via `$TMUX` env var and falls back to `tmux display-message` for client PID/TTY.
 - **Session revive:** `SessionScanner` discovers orphaned Claude processes and creates synthetic session files (prefixed `revived-`). These are naturally replaced when real hook events arrive. Scanner detects bundle IDs via PPID chain with Info.plist fallback, and resolves tmux pane TTYs to real terminal client TTYs.
 - **Hook TTY cleanup:** Every hook event (not just SessionStart) cleans up other session files sharing the same TTY. This ensures revived sessions are replaced when real hook events arrive.
