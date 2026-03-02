@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var settings = AppSettings.shared
     @ObservedObject private var store = StateStore.shared
+    @ObservedObject private var updateChecker = UpdateChecker.shared
+    @State private var showCopied = false
 
     var body: some View {
         ScrollView {
@@ -16,10 +18,12 @@ struct SettingsView: View {
                 sessionDisplaySection
                 Divider()
                 advancedSection
+                Divider()
+                aboutSection
             }
             .padding(20)
         }
-        .frame(width: 360, height: 560)
+        .frame(width: 360, height: 620)
     }
 
     // MARK: - General
@@ -233,16 +237,87 @@ struct SettingsView: View {
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
 
-            Divider()
-                .padding(.top, 4)
-
             VStack(alignment: .leading, spacing: 4) {
                 Text(Strings.recoverTitle)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 12))
 
                 Text(Strings.recoverDesc)
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
+            }
+            .padding(.top, 2)
+        }
+    }
+
+    // MARK: - About
+
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(Strings.version)
+                    .font(.system(size: 13, weight: .semibold))
+                Text("v\(updateChecker.currentVersion)")
+                    .font(.system(size: 13, design: .monospaced))
+                    .foregroundColor(.secondary)
+                Spacer()
+                Button {
+                    updateChecker.checkForUpdates()
+                } label: {
+                    if updateChecker.isChecking {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text(Strings.checkForUpdates)
+                            .font(.system(size: 11))
+                    }
+                }
+                .disabled(updateChecker.isChecking)
+            }
+
+            if updateChecker.isUpdateAvailable, let latest = updateChecker.latestVersion {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 6, height: 6)
+                    Text("\(Strings.updateAvailable): v\(latest)")
+                        .font(.system(size: 11))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    if UpdateChecker.isHomebrewInstall {
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString("brew upgrade claude-runner", forType: .string)
+                            showCopied = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                showCopied = false
+                            }
+                        } label: {
+                            Text(showCopied ? Strings.copied : Strings.copyCommand)
+                                .font(.system(size: 11))
+                        }
+                    } else {
+                        Button {
+                            if let url = URL(string: "https://github.com/jyami-kim/claude-runner/releases/latest") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        } label: {
+                            Text(Strings.download)
+                                .font(.system(size: 11))
+                        }
+                    }
+                }
+                .padding(8)
+                .background(Color.orange.opacity(0.08))
+                .cornerRadius(6)
+            } else if !updateChecker.isChecking, updateChecker.latestVersion != nil {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(.green)
+                    Text(Strings.upToDate)
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
             }
 
             Divider()

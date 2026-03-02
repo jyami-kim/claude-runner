@@ -115,6 +115,16 @@ open /Applications/claude-runner.app
 | Manual | Settings > Advanced > "Uninstall claude-runner..." |
 | Source build | `./install.sh uninstall` |
 
+## Update
+
+| Install Method | Update Method |
+|----------------|---------------|
+| Homebrew | `brew update && brew upgrade claude-runner` |
+| Manual download | Download from [latest release](https://github.com/jyami-kim/claude-runner/releases/latest) and replace in `/Applications/` |
+| Source build | `git pull && ./install.sh` |
+
+> You can check the current version and check for updates in the Version section at the bottom of Settings. For Homebrew installs, the upgrade command can be copied to clipboard directly.
+
 ## How It Works
 
 ```

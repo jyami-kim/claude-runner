@@ -116,6 +116,16 @@ open /Applications/claude-runner.app
 | 수동/소스 | Settings > Advanced > "Uninstall claude-runner..." |
 | 소스 빌드 | `./install.sh uninstall` |
 
+## 업데이트
+
+| 설치 방법 | 업데이트 방법 |
+|-----------|--------------|
+| Homebrew | `brew update && brew upgrade claude-runner` |
+| 수동 다운로드 | [최신 릴리스](https://github.com/jyami-kim/claude-runner/releases/latest)에서 다운로드 후 `/Applications/`에 덮어쓰기 |
+| 소스 빌드 | `git pull && ./install.sh` |
+
+> 앱 Settings 하단 Version 섹션에서 현재 버전 확인 및 업데이트 체크가 가능합니다. Homebrew 설치 시 업데이트 명령어를 클립보드에 복사할 수 있습니다.
+
 ## 작동 원리
 
 ```

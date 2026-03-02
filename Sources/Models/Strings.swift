@@ -188,6 +188,33 @@ enum Strings {
         lang == .korean ? "claude-runner 설정" : "claude-runner Settings"
     }
 
+    // MARK: - SettingsView — About
+
+    static var version: String {
+        lang == .korean ? "버전" : "Version"
+    }
+    static var checkForUpdates: String {
+        lang == .korean ? "업데이트 확인" : "Check for Updates"
+    }
+    static var updateAvailable: String {
+        lang == .korean ? "새 버전 사용 가능" : "Update Available"
+    }
+    static var upToDate: String {
+        lang == .korean ? "최신 버전입니다" : "Up to date"
+    }
+    static var checking: String {
+        lang == .korean ? "확인 중…" : "Checking…"
+    }
+    static var download: String {
+        lang == .korean ? "다운로드" : "Download"
+    }
+    static var copyCommand: String {
+        lang == .korean ? "명령어 복사" : "Copy Command"
+    }
+    static var copied: String {
+        lang == .korean ? "복사됨" : "Copied!"
+    }
+
     // MARK: - SessionState
 
     static func using(_ tool: String) -> String {

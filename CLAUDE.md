@@ -24,7 +24,7 @@ claude-runner/
 │   │   └── Strings.swift           # Centralized UI strings (Korean + English)
 │   ├── Views/
 │   │   ├── SessionListView.swift   # Panel content: session list + session row + Revive button
-│   │   ├── SettingsView.swift      # Settings window UI (5 sections)
+│   │   ├── SettingsView.swift      # Settings window UI (6 sections)
 │   │   └── StatusIcon.swift        # Menu bar icon updater
 │   ├── Services/
 │   │   ├── HookInstaller.swift     # Installs hook script to Application Support
@@ -33,6 +33,7 @@ claude-runner/
 │   │   ├── SessionScanner.swift    # Scans running processes for orphaned Claude sessions
 │   │   ├── LoginItemManager.swift  # SMAppService wrapper for launch-at-login
 │   │   ├── NotificationService.swift  # UNUserNotificationCenter wrapper + click-to-focus
+│   │   ├── UpdateChecker.swift     # GitHub Releases API update checker
 │   │   ├── TerminalFocuser.swift   # Protocol + dispatcher + shared helpers
 │   │   └── Focusers/
 │   │       ├── ITermFocuser.swift         # iTerm2 AppleScript TTY matching
@@ -60,7 +61,8 @@ claude-runner/
 │   ├── HookRegistrarTests.swift
 │   ├── AppInfoTests.swift
 │   ├── WorktreeResolutionTests.swift
-│   └── SessionScannerTests.swift
+│   ├── SessionScannerTests.swift
+│   └── UpdateCheckerTests.swift
 └── Package.swift
 ```
 
@@ -80,8 +82,9 @@ claude-runner/
    - **JetBrainsFocuser**: Toolbox CLI launcher with git worktree resolution
    - **DefaultFocuser**: `NSRunningApplication.activate()` fallback (Ghostty, Warp, etc.)
 10. **NotificationService** sends alerts for permission/waiting state changes with activity context. Clicking a notification focuses the session's terminal app.
-11. **SettingsView** provides a settings window with General (launch at login, notifications, language selector), Status Guide, Menu Bar Icon, Session Display, and Advanced sections.
+11. **SettingsView** provides a settings window with General (launch at login, notifications, language selector), Status Guide, Menu Bar Icon, Session Display, Advanced, and About sections.
 12. **SessionScanner** scans running `claude` processes via `pgrep`/`ps`/`lsof` to discover orphaned sessions not tracked by session files. Used by `StateStore.reviveSessions()`.
+13. **UpdateChecker** fetches the latest release from GitHub Releases API, parses the tag name, and compares versions using semver. Exposed in the About section of SettingsView.
 
 ## Build & Test
 
