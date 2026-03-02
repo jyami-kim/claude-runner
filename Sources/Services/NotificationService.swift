@@ -50,7 +50,8 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
             if let activity = session?.activityText {
                 body += "\n\(activity)"
             }
-            send(title: Strings.notifPermissionTitle, body: body, sessionId: session?.sessionId)
+            send(title: Strings.notifPermissionTitle, body: body,
+                 sessionId: session?.sessionId, bundleId: session?.terminalBundleId)
             return
         }
 
@@ -63,20 +64,28 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
             if let activity = session?.activityText {
                 body += "\n\(activity)"
             }
-            send(title: Strings.notifWaitingTitle, body: body, sessionId: session?.sessionId)
+            send(title: Strings.notifWaitingTitle, body: body,
+                 sessionId: session?.sessionId, bundleId: session?.terminalBundleId)
             return
         }
     }
 
-    private func send(title: String, body: String, sessionId: String?) {
+    private func send(title: String, body: String, sessionId: String?, bundleId: String? = nil) {
         // System notification (if available)
         if let center = center, isAvailable {
             let content = UNMutableNotificationContent()
             content.title = title
             content.body = body
             content.sound = .default
+            var userInfo: [String: String] = [:]
             if let sessionId = sessionId {
-                content.userInfo = ["sessionId": sessionId]
+                userInfo["sessionId"] = sessionId
+            }
+            if let bundleId = bundleId {
+                userInfo["terminalBundleId"] = bundleId
+            }
+            if !userInfo.isEmpty {
+                content.userInfo = userInfo
             }
 
             let request = UNNotificationRequest(
@@ -113,6 +122,11 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
            let session = StateStore.shared.sessions.first(where: { $0.sessionId == sessionId }) {
             DispatchQueue.main.async {
                 TerminalFocuser.focus(session: session)
+            }
+        } else if let bundleId = userInfo["terminalBundleId"] as? String {
+            // Fallback: session may have been removed, but we still know the terminal app
+            DispatchQueue.main.async {
+                TerminalFocuser.activateApp(bundleID: bundleId)
             }
         }
         completionHandler()
