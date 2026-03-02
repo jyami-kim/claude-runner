@@ -43,21 +43,27 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, Not
 
         // Permission: count increased (most urgent)
         if newCounts.permissionCount > 0 && newCounts.permissionCount > oldCounts.permissionCount {
-            let body = newCounts.permissionCount == 1
+            let session = sessions.first(where: { $0.state == .permission })
+            var body = newCounts.permissionCount == 1
                 ? "1 session needs approval"
                 : "\(newCounts.permissionCount) sessions need approval"
-            let sessionId = sessions.first(where: { $0.state == .permission })?.sessionId
-            send(title: "Needs Approval", body: body, sessionId: sessionId)
+            if let activity = session?.activityText {
+                body += "\n\(activity)"
+            }
+            send(title: "Needs Approval", body: body, sessionId: session?.sessionId)
             return
         }
 
-        // Waiting: 0 → 1+ (user input needed)
-        if oldCounts.waitingCount == 0 && newCounts.waitingCount > 0 {
-            let body = newCounts.waitingCount == 1
+        // Waiting: count increased (a session finished and needs input)
+        if newCounts.waitingCount > 0 && newCounts.waitingCount > oldCounts.waitingCount {
+            let session = sessions.first(where: { $0.state == .waiting })
+            var body = newCounts.waitingCount == 1
                 ? "1 session is waiting for input"
                 : "\(newCounts.waitingCount) sessions waiting for input"
-            let sessionId = sessions.first(where: { $0.state == .waiting })?.sessionId
-            send(title: "Waiting for Input", body: body, sessionId: sessionId)
+            if let activity = session?.activityText {
+                body += "\n\(activity)"
+            }
+            send(title: "Waiting for Input", body: body, sessionId: session?.sessionId)
             return
         }
     }

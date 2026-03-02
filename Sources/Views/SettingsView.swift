@@ -46,6 +46,9 @@ struct SettingsView: View {
 
             Toggle("Notify on State Change", isOn: $settings.notifyOnStateChange)
                 .font(.system(size: 12))
+
+            Toggle("Show Task Message", isOn: $settings.showTaskMessage)
+                .font(.system(size: 12))
         }
     }
 

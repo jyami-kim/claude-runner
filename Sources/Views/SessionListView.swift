@@ -46,6 +46,16 @@ struct SessionListView: View {
 
                 Spacer()
 
+                Button(action: { store.reviveSessions() }) {
+                    Label("Revive", systemImage: "arrow.counterclockwise")
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(.secondary)
+                .help("Scan terminals for orphaned Claude sessions")
+
+                Spacer()
+
                 Button(action: quitApp) {
                     HStack(spacing: 2) {
                         Text("\u{2318}")
@@ -107,6 +117,15 @@ struct SessionRow: View {
                             .font(.system(size: 10))
                             .foregroundColor(.secondary)
                             .lineLimit(1)
+                    }
+
+                    if settings.showTaskMessage,
+                       let activity = session.activityText {
+                        Text(activity)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                     }
                 }
 

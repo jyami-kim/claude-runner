@@ -293,4 +293,93 @@ final class SessionStateTests: XCTestCase {
         b.waitingCount = 1
         XCTAssertNotEqual(a, b)
     }
+
+    // MARK: - Activity Fields
+
+    func testDecodingWithActivityFields() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"active","updated_at":"2026-02-13T12:00:00Z","last_message":"Hello","current_activity":"Bash"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertEqual(entry.lastMessage, "Hello")
+        XCTAssertEqual(entry.currentActivity, "Bash")
+    }
+
+    func testDecodingWithoutActivityFields() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"active","updated_at":"2026-02-13T12:00:00Z"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertNil(entry.lastMessage)
+        XCTAssertNil(entry.currentActivity)
+    }
+
+    func testActivityTextActiveWithTool() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"active","updated_at":"2026-02-13T12:00:00Z","current_activity":"Bash"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertEqual(entry.activityText, "Using Bash")
+    }
+
+    func testActivityTextWaitingWithMessage() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"waiting","updated_at":"2026-02-13T12:00:00Z","last_message":"Build completed successfully"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertEqual(entry.activityText, "Build completed successfully")
+    }
+
+    func testActivityTextTruncatesAt80Chars() throws {
+        let longMessage = String(repeating: "a", count: 100)
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"waiting","updated_at":"2026-02-13T12:00:00Z","last_message":"\(longMessage)"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertNotNil(entry.activityText)
+        // 80 chars + "…"
+        XCTAssertEqual(entry.activityText?.count, 81)
+        XCTAssertTrue(entry.activityText!.hasSuffix("…"))
+    }
+
+    func testActivityTextFirstLineOnly() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"waiting","updated_at":"2026-02-13T12:00:00Z","last_message":"First line\\nSecond line"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertEqual(entry.activityText, "First line")
+    }
+
+    func testActivityTextNilWhenNoData() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"active","updated_at":"2026-02-13T12:00:00Z"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertNil(entry.activityText)
+    }
+
+    func testActivityTextNilForActiveWithoutTool() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"active","updated_at":"2026-02-13T12:00:00Z","last_message":"Hello"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertNil(entry.activityText)
+    }
+
+    func testActivityTextPermissionWithMessage() throws {
+        let json = """
+        {"session_id":"x","cwd":"/tmp","state":"permission","updated_at":"2026-02-13T12:00:00Z","last_message":"Need approval"}
+        """.data(using: .utf8)!
+
+        let entry = try decoder.decode(SessionEntry.self, from: json)
+        XCTAssertEqual(entry.activityText, "Need approval")
+    }
 }

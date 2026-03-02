@@ -29,5 +29,6 @@ final class AppSettings: ObservableObject {
     @AppStorage("notifyOnStateChange") var notifyOnStateChange = true
     @AppStorage("iconStyle") var iconStyle: IconStyle = .trafficLight
     @AppStorage("sessionDisplayFormat") var sessionDisplayFormat: SessionDisplayFormat = .fullPath
+    @AppStorage("showTaskMessage") var showTaskMessage: Bool = true
     @AppStorage("staleTimeoutMinutes") var staleTimeoutMinutes: Int = 10
 }

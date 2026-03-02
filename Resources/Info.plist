@@ -24,5 +24,7 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>claude-runner needs to control terminal apps to focus the correct window or tab for your Claude Code sessions.</string>
 </dict>
 </plist>

@@ -40,9 +40,18 @@
 
 ### 지원 터미널/IDE
 
-- **iTerm2 / Terminal.app**: AppleScript TTY 매칭 (전체화면 Spaces 지원)
-- **JetBrains IDEs**: Toolbox CLI 연동 프로젝트 창 전환
-- **기타 앱**: `NSRunningApplication` 활성화 폴백
+| 터미널/IDE | 앱 활성화 | 탭/윈도우 전환 | 방식 |
+|------------|:---------:|:--------------:|------|
+| **iTerm2** | ✅ | ✅ | AppleScript TTY 매칭 |
+| **Terminal.app** | ✅ | ✅ | AppleScript TTY 매칭 |
+| **JetBrains IDEs** | ✅ | ✅ | Toolbox CLI (worktree 지원) |
+| **Ghostty** | ✅ | ✅ | System Events 윈도우 타이틀 매칭 * |
+| **Warp** | ✅ | ❌ | 앱 활성화만 (Warp가 윈도우 타이틀에 경로 미포함) |
+| **VS Code / Cursor / Zed** | ✅ | ❌ | 앱 활성화만 |
+| **기타** | ✅ | ❌ | `NSRunningApplication` 폴백 |
+
+> \* Ghostty/Warp 윈도우 타이틀 매칭은 **손쉬운 사용(Accessibility)** 권한이 필요합니다.
+> \* tmux 환경에서도 터미널 아이콘 표시 및 탭 전환이 지원됩니다.
 
 ## 상태 표시
 

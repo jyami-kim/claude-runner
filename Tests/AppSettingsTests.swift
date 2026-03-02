@@ -57,6 +57,7 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertNil(defaults.object(forKey: "iconStyle"))
         XCTAssertNil(defaults.object(forKey: "sessionDisplayFormat"))
         XCTAssertNil(defaults.object(forKey: "staleTimeoutMinutes"))
+        XCTAssertNil(defaults.object(forKey: "showTaskMessage"))
     }
 
     func testIconStylePersistence() {
@@ -97,5 +98,14 @@ final class AppSettingsTests: XCTestCase {
 
         defaults.set(false, forKey: "notifyOnStateChange")
         XCTAssertFalse(defaults.bool(forKey: "notifyOnStateChange"))
+    }
+
+    func testShowTaskMessagePersistence() {
+        let suiteName = "test-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        defaults.set(false, forKey: "showTaskMessage")
+        XCTAssertFalse(defaults.bool(forKey: "showTaskMessage"))
     }
 }

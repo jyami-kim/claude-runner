@@ -11,6 +11,7 @@ enum AppInfo {
         "com.googlecode.iterm2": "iTerm2",
         "net.kovidgoyal.kitty": "Kitty",
         "com.github.wez.wezterm": "WezTerm",
+        "com.mitchellh.ghostty": "Ghostty",
         "dev.warp.Warp-Stable": "Warp",
         "com.microsoft.VSCode": "VS Code",
         "com.microsoft.VSCodeInsiders": "VS Code Insiders",

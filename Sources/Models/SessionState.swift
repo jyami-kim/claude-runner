@@ -33,6 +33,8 @@ struct SessionEntry: Codable, Identifiable {
     let startedAt: Date?
     let terminalBundleId: String?
     let tty: String?
+    let lastMessage: String?
+    let currentActivity: String?
 
     var id: String { sessionId }
 
@@ -83,6 +85,26 @@ struct SessionEntry: Codable, Identifiable {
         return "\(hours)h \(remainingMinutes)m"
     }
 
+    /// Activity text for display in the session list and notifications.
+    ///
+    /// - active + tool → "Using {tool}"
+    /// - waiting/permission + lastMessage → first line, truncated to 80 chars
+    /// - no data → nil
+    var activityText: String? {
+        if state == .active, let activity = currentActivity, !activity.isEmpty {
+            return "Using \(activity)"
+        }
+        if (state == .waiting || state == .permission),
+           let message = lastMessage, !message.isEmpty {
+            let firstLine = message.components(separatedBy: .newlines).first ?? message
+            if firstLine.count > 80 {
+                return String(firstLine.prefix(80)) + "…"
+            }
+            return firstLine
+        }
+        return nil
+    }
+
     enum CodingKeys: String, CodingKey {
         case sessionId = "session_id"
         case cwd
@@ -91,6 +113,8 @@ struct SessionEntry: Codable, Identifiable {
         case startedAt = "started_at"
         case terminalBundleId = "terminal_bundle_id"
         case tty
+        case lastMessage = "last_message"
+        case currentActivity = "current_activity"
     }
 }
 
@@ -205,6 +229,42 @@ final class StateStore: ObservableObject {
         DispatchQueue.main.async {
             self.sessions = loaded
             self.counts = newCounts
+        }
+    }
+
+    /// Scan for orphaned Claude processes and create synthetic session files.
+    func reviveSessions() {
+        let existingTTYs = Set(sessions.compactMap { $0.tty })
+        let dir = sessionsDirectory
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let orphaned = SessionScanner.scanForOrphanedSessions(existingTTYs: existingTTYs)
+
+            let formatter = ISO8601DateFormatter()
+            let now = formatter.string(from: Date())
+
+            for session in orphaned {
+                let sessionId = "revived-\(session.tty.replacingOccurrences(of: "/", with: "-"))"
+                let dict: [String: Any] = [
+                    "session_id": sessionId,
+                    "cwd": session.cwd,
+                    "state": "waiting",
+                    "updated_at": now,
+                    "started_at": now,
+                    "terminal_bundle_id": session.terminalBundleId,
+                    "tty": session.tty,
+                    "last_message": "",
+                    "current_activity": "",
+                ]
+
+                guard let data = try? JSONSerialization.data(withJSONObject: dict) else { continue }
+                let file = dir.appendingPathComponent("\(sessionId).json")
+                try? data.write(to: file, options: .atomic)
+            }
+
+            DispatchQueue.main.async {
+                self?.reload()
+            }
         }
     }
 

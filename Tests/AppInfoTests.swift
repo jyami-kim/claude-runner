@@ -22,6 +22,7 @@ final class AppInfoTests: XCTestCase {
         XCTAssertEqual(AppInfo.appName(for: "dev.zed.Zed"), "Zed")
         XCTAssertEqual(AppInfo.appName(for: "dev.warp.Warp-Stable"), "Warp")
         XCTAssertEqual(AppInfo.appName(for: "com.todesktop.230313mzl4w4u92"), "Cursor")
+        XCTAssertEqual(AppInfo.appName(for: "com.mitchellh.ghostty"), "Ghostty")
     }
 
     // MARK: - Unknown Bundle IDs

@@ -229,4 +229,57 @@ final class StateStoreTests: XCTestCase {
         XCTAssertEqual(store.counts.totalCount, 3)
         XCTAssertEqual(store.counts.dominantState, .waiting)
     }
+
+    // MARK: - Revive Sessions (synthetic file creation)
+
+    func testReviveSessionsCreatesFile() {
+        // Manually create a synthetic revived session file (simulating what reviveSessions does)
+        let sessionId = "revived--dev-ttys099"
+        let now = ISO8601DateFormatter().string(from: Date())
+        let dict: [String: Any] = [
+            "session_id": sessionId,
+            "cwd": "/tmp/test-project",
+            "state": "waiting",
+            "updated_at": now,
+            "started_at": now,
+            "terminal_bundle_id": "com.googlecode.iterm2",
+            "tty": "/dev/ttys099",
+            "last_message": "",
+            "current_activity": "",
+        ]
+        let data = try! JSONSerialization.data(withJSONObject: dict)
+        try! data.write(to: tempDir.appendingPathComponent("\(sessionId).json"))
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        XCTAssertEqual(store.sessions.count, 1)
+        XCTAssertEqual(store.sessions.first?.sessionId, sessionId)
+        XCTAssertEqual(store.sessions.first?.tty, "/dev/ttys099")
+        XCTAssertEqual(store.sessions.first?.state, .waiting)
+    }
+
+    // MARK: - Activity Fields in Session Files
+
+    func testReloadWithActivityFields() {
+        let now = Date()
+        let dict: [String: Any] = [
+            "session_id": "s1",
+            "cwd": "/tmp/project",
+            "state": "active",
+            "updated_at": ISO8601DateFormatter().string(from: now),
+            "last_message": "Build done",
+            "current_activity": "Bash",
+        ]
+        let data = try! JSONSerialization.data(withJSONObject: dict)
+        try! data.write(to: tempDir.appendingPathComponent("s1.json"))
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        XCTAssertEqual(store.sessions.first?.lastMessage, "Build done")
+        XCTAssertEqual(store.sessions.first?.currentActivity, "Bash")
+    }
 }
