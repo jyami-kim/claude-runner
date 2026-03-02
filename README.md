@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <a href="README.en.md">English</a> | 한국어
+</p>
+
+<p align="center">
   <a href="https://github.com/jyami-kim/claude-runner/releases/latest"><img src="https://img.shields.io/github/v/release/jyami-kim/claude-runner?style=flat-square" alt="Release"></a>
   <a href="https://github.com/jyami-kim/claude-runner/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/jyami-kim/claude-runner/ci.yml?style=flat-square&label=CI" alt="CI"></a>
   <img src="https://img.shields.io/badge/platform-macOS%2013%2B-blue?style=flat-square" alt="macOS 13+">
