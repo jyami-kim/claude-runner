@@ -97,6 +97,13 @@ jobs:
 
             app "claude-runner.app"
 
+            postflight do
+              system_command "/usr/bin/xattr",
+                             args: ["-cr", "#{appdir}/claude-runner.app"]
+              system_command "/usr/bin/open",
+                             args: ["#{appdir}/claude-runner.app"]
+            end
+
             uninstall quit: "com.jyami.claude-runner",
                       script: {
                         executable: "/usr/bin/python3",

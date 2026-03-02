@@ -46,6 +46,7 @@ claude-runner/
 │       └── NSImage+TrafficLight.swift  # Menu bar icon renderers (4 styles)
 ├── Scripts/
 │   └── claude-runner-hook.sh       # Claude Code hook → writes session JSON (tmux-aware)
+├── release.sh                      # Release script: version bump → tag → push (triggers CI)
 ├── Resources/
 │   ├── AppIcon.icns / .svg
 │   └── Info.plist
