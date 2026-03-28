@@ -235,11 +235,26 @@ final class StateStore: ObservableObject {
     }
 
     /// Scan for orphaned Claude processes and create synthetic session files.
+    /// Also cleans up dead sessions (active/permission state but no running process).
     func reviveSessions() {
-        let existingTTYs = Set(sessions.compactMap { $0.tty })
+        let existingSessions = sessions
+        let existingTTYs = Set(existingSessions.compactMap { $0.tty })
         let dir = sessionsDirectory
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let activeTTYs = SessionScanner.findActiveClaudeTTYs()
+
+            // Clean up dead sessions: active/permission state but no running claude process
+            let fm = FileManager.default
+            for session in existingSessions where session.state != .waiting {
+                guard let tty = session.tty, !tty.isEmpty else { continue }
+                if !activeTTYs.contains(tty) {
+                    let file = dir.appendingPathComponent("\(session.sessionId).json")
+                    try? fm.removeItem(at: file)
+                }
+            }
+
+            // Discover orphaned processes not tracked by session files
             let orphaned = SessionScanner.scanForOrphanedSessions(existingTTYs: existingTTYs)
 
             let formatter = ISO8601DateFormatter()

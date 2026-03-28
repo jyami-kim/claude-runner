@@ -11,6 +11,18 @@ enum SessionScanner {
         let terminalBundleId: String
     }
 
+    /// Returns TTYs where a Claude process is actually running.
+    static func findActiveClaudeTTYs() -> Set<String> {
+        let claudePids = findClaudePids()
+        var ttys = Set<String>()
+        for pid in claudePids {
+            guard let info = getProcessInfo(pid: pid) else { continue }
+            let tty = resolveTmuxClientTTY(paneTTY: info.tty) ?? info.tty
+            if !tty.isEmpty { ttys.insert(tty) }
+        }
+        return ttys
+    }
+
     /// Scans for running Claude processes not represented in the existing session TTYs.
     ///
     /// - Parameter existingTTYs: TTYs of currently tracked sessions.

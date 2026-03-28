@@ -20,6 +20,7 @@ enum TerminalFocuser {
         ITermFocuser.self,
         TerminalAppFocuser.self,
         JetBrainsFocuser.self,
+        WarpFocuser.self,
     ]
 
     /// Bring the terminal window for this session to the foreground.

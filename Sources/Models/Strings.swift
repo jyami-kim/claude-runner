@@ -214,6 +214,9 @@ enum Strings {
     static var copied: String {
         lang == .korean ? "복사됨" : "Copied!"
     }
+    static var updateHint: String {
+        lang == .korean ? "앱을 종료한 후 터미널에서 실행해주세요" : "Quit the app first, then run in terminal"
+    }
 
     // MARK: - SessionState
 

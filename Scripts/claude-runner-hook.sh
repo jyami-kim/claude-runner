@@ -5,6 +5,24 @@ set -euo pipefail
 # Receives JSON from Claude Code hooks via stdin
 # Writes per-session state files to sessions/ directory
 
+# Verify this hook is being called from Claude Code (not other tools like opencode)
+# Walk up the PPID chain looking for the 'claude' binary
+is_claude_code_caller() {
+    local pid=$$
+    for _ in 1 2 3 4 5; do
+        pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d ' ')
+        [ -z "$pid" ] || [ "$pid" -le 1 ] 2>/dev/null && return 1
+        local cmd
+        cmd=$(basename "$(ps -p "$pid" -o comm= 2>/dev/null)" 2>/dev/null)
+        [ "$cmd" = "claude" ] && return 0
+    done
+    return 1
+}
+
+if ! is_claude_code_caller; then
+    exit 0
+fi
+
 SESSIONS_DIR="$HOME/Library/Application Support/claude-runner/sessions"
 mkdir -p "$SESSIONS_DIR"
 

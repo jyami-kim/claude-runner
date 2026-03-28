@@ -275,35 +275,43 @@ struct SettingsView: View {
             }
 
             if updateChecker.isUpdateAvailable, let latest = updateChecker.latestVersion {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(Color.orange)
-                        .frame(width: 6, height: 6)
-                    Text("\(Strings.updateAvailable): v\(latest)")
-                        .font(.system(size: 11))
-                        .foregroundColor(.primary)
-                    Spacer()
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(Color.orange)
+                            .frame(width: 6, height: 6)
+                        Text("\(Strings.updateAvailable): v\(latest)")
+                            .font(.system(size: 11))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        if UpdateChecker.isHomebrewInstall {
+                            Button {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString("brew upgrade claude-runner", forType: .string)
+                                showCopied = true
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    showCopied = false
+                                }
+                            } label: {
+                                Text(showCopied ? Strings.copied : Strings.copyCommand)
+                                    .font(.system(size: 11))
+                            }
+                        } else {
+                            Button {
+                                if let url = URL(string: "https://github.com/jyami-kim/claude-runner/releases/latest") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            } label: {
+                                Text(Strings.download)
+                                    .font(.system(size: 11))
+                            }
+                        }
+                    }
+
                     if UpdateChecker.isHomebrewInstall {
-                        Button {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString("brew upgrade claude-runner", forType: .string)
-                            showCopied = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                showCopied = false
-                            }
-                        } label: {
-                            Text(showCopied ? Strings.copied : Strings.copyCommand)
-                                .font(.system(size: 11))
-                        }
-                    } else {
-                        Button {
-                            if let url = URL(string: "https://github.com/jyami-kim/claude-runner/releases/latest") {
-                                NSWorkspace.shared.open(url)
-                            }
-                        } label: {
-                            Text(Strings.download)
-                                .font(.system(size: 11))
-                        }
+                        Text(Strings.updateHint)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
                     }
                 }
                 .padding(8)
