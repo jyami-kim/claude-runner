@@ -244,9 +244,9 @@ final class StateStore: ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let activeTTYs = SessionScanner.findActiveClaudeTTYs()
 
-            // Clean up dead sessions: active/permission state but no running claude process
+            // Clean up dead sessions: any session whose TTY has no running claude process
             let fm = FileManager.default
-            for session in existingSessions where session.state != .waiting {
+            for session in existingSessions {
                 guard let tty = session.tty, !tty.isEmpty else { continue }
                 if !activeTTYs.contains(tty) {
                     let file = dir.appendingPathComponent("\(session.sessionId).json")

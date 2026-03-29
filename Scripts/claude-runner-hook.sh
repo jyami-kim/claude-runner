@@ -5,33 +5,37 @@ set -euo pipefail
 # Receives JSON from Claude Code hooks via stdin
 # Writes per-session state files to sessions/ directory
 
-# Verify this hook is being called from Claude Code (not other tools like opencode)
-# Walk up the PPID chain looking for the 'claude' binary
-is_claude_code_caller() {
-    local pid=$$
-    for _ in 1 2 3 4 5; do
-        pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d ' ')
-        [ -z "$pid" ] || [ "$pid" -le 1 ] 2>/dev/null && return 1
-        local cmd
-        cmd=$(basename "$(ps -p "$pid" -o comm= 2>/dev/null)" 2>/dev/null)
-        [ "$cmd" = "claude" ] && return 0
-    done
-    return 1
-}
-
-if ! is_claude_code_caller; then
-    exit 0
-fi
-
 SESSIONS_DIR="$HOME/Library/Application Support/claude-runner/sessions"
 mkdir -p "$SESSIONS_DIR"
 
-# Read JSON from stdin
+# Read JSON from stdin (must read before PPID chain check, as async hooks may lose parent)
 INPUT=$(cat)
 
 # Parse fields using jq
 HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+
+# For SessionEnd, skip caller validation — the claude process may already be gone
+# when this async hook runs. Worst case: a stale session file gets deleted.
+if [ "$HOOK_EVENT" != "SessionEnd" ]; then
+    # Verify this hook is being called from Claude Code (not other tools like opencode)
+    # Walk up the PPID chain looking for the 'claude' binary
+    is_claude_code_caller() {
+        local pid=$$
+        for _ in 1 2 3 4 5; do
+            pid=$(ps -p "$pid" -o ppid= 2>/dev/null | tr -d ' ')
+            [ -z "$pid" ] || [ "$pid" -le 1 ] 2>/dev/null && return 1
+            local cmd
+            cmd=$(basename "$(ps -p "$pid" -o comm= 2>/dev/null)" 2>/dev/null)
+            [ "$cmd" = "claude" ] && return 0
+        done
+        return 1
+    }
+
+    if ! is_claude_code_caller; then
+        exit 0
+    fi
+fi
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 
 # Detect parent terminal/IDE bundle ID by walking the PPID chain from a given PID
