@@ -260,6 +260,157 @@ final class StateStoreTests: XCTestCase {
         XCTAssertEqual(store.sessions.first?.state, .waiting)
     }
 
+    // MARK: - performRevive — TTY-based dead session cleanup
+
+    private func writeSessionWithTTY(
+        id: String,
+        cwd: String = "/tmp/project",
+        state: String,
+        tty: String? = nil,
+        updatedAt: Date = Date()
+    ) {
+        var dict: [String: Any] = [
+            "session_id": id,
+            "cwd": cwd,
+            "state": state,
+            "updated_at": ISO8601DateFormatter().string(from: updatedAt),
+        ]
+        if let tty = tty {
+            dict["tty"] = tty
+        }
+        let data = try! JSONSerialization.data(withJSONObject: dict)
+        try! data.write(to: tempDir.appendingPathComponent("\(id).json"))
+    }
+
+    func testRevive_keepsSession_whenTTYMatchesActiveTTYs() {
+        writeSessionWithTTY(id: "alive", cwd: "/tmp/proj", state: "active", tty: "/dev/ttys001")
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        store._performRevive(existingSessions: store.sessions,
+            activeTTYs: ["/dev/ttys001"],
+            activeCwds: [],
+            orphaned: [],
+            dir: tempDir
+        )
+        waitForMainQueue()
+
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: tempDir.appendingPathComponent("alive.json").path))
+    }
+
+    func testRevive_deletesSession_whenTTYNotInActiveTTYs() {
+        writeSessionWithTTY(id: "dead", cwd: "/tmp/proj", state: "active", tty: "/dev/ttys099")
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        store._performRevive(existingSessions: store.sessions,
+            activeTTYs: [],
+            activeCwds: [],
+            orphaned: [],
+            dir: tempDir
+        )
+        waitForMainQueue()
+
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: tempDir.appendingPathComponent("dead.json").path))
+    }
+
+    func testRevive_keepsEmptyTTYSession_whenCwdMatchesActiveCwds() {
+        writeSessionWithTTY(id: "ghost-alive", cwd: "/tmp/live-proj", state: "active", tty: nil)
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        // activeCwds must contain the canonicalized form of the session's cwd,
+        // because _performRevive canonicalizes session.cwd before comparing.
+        // On macOS, /tmp is a symlink to /private/tmp.
+        let canonicalLiveCwd = SessionScanner.canonicalizeCwd("/tmp/live-proj")
+        store._performRevive(existingSessions: store.sessions,
+            activeTTYs: [],
+            activeCwds: [canonicalLiveCwd],
+            orphaned: [],
+            dir: tempDir
+        )
+        waitForMainQueue()
+
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: tempDir.appendingPathComponent("ghost-alive.json").path))
+    }
+
+    func testRevive_deletesEmptyTTYSession_whenCwdNotInActiveCwds() {
+        writeSessionWithTTY(id: "ghost-dead", cwd: "/tmp/dead-proj", state: "permission", tty: nil)
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        store._performRevive(existingSessions: store.sessions,
+            activeTTYs: [],
+            activeCwds: [],
+            orphaned: [],
+            dir: tempDir
+        )
+        waitForMainQueue()
+
+        XCTAssertFalse(FileManager.default.fileExists(
+            atPath: tempDir.appendingPathComponent("ghost-dead.json").path))
+    }
+
+    func testRevive_deletesOldTmpFiles() {
+        // Create a .tmp.* file with mtime > 24h ago
+        let tmpFile = tempDir.appendingPathComponent(".tmp.staleXYZ")
+        try! "leftover".data(using: .utf8)!.write(to: tmpFile)
+        // Back-date the file by setting mtime to 25 hours ago
+        let oldDate = Date().addingTimeInterval(-90000)
+        try! FileManager.default.setAttributes(
+            [.modificationDate: oldDate],
+            ofItemAtPath: tmpFile.path
+        )
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        store._performRevive(existingSessions: store.sessions,
+            activeTTYs: [],
+            activeCwds: [],
+            orphaned: [],
+            dir: tempDir
+        )
+        waitForMainQueue()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: tmpFile.path),
+            "Stale .tmp.* file should have been deleted")
+    }
+
+    func testRevive_keepsRecentTmpFiles() {
+        // Create a .tmp.* file with mtime < 24h ago
+        let tmpFile = tempDir.appendingPathComponent(".tmp.recentABC")
+        try! "leftover".data(using: .utf8)!.write(to: tmpFile)
+        // mtime is effectively now (just written)
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: false)
+        store.reload()
+        waitForMainQueue()
+
+        store._performRevive(existingSessions: store.sessions,
+            activeTTYs: [],
+            activeCwds: [],
+            orphaned: [],
+            dir: tempDir
+        )
+        waitForMainQueue()
+
+        XCTAssertTrue(FileManager.default.fileExists(atPath: tmpFile.path),
+            "Recent .tmp.* file should be kept (not old enough to delete)")
+    }
+
     // MARK: - Activity Fields in Session Files
 
     func testReloadWithActivityFields() {
@@ -281,5 +432,45 @@ final class StateStoreTests: XCTestCase {
 
         XCTAssertEqual(store.sessions.first?.lastMessage, "Build done")
         XCTAssertEqual(store.sessions.first?.currentActivity, "Bash")
+    }
+
+    // MARK: - reviveSessions() public entry point regression
+
+    func testReviveSessions_dispatchesAndReloads() {
+        // Ghost session with a cwd no real process will ever have.
+        // When reviveSessions() runs, findActiveClaudeCwds() won't return this cwd,
+        // so _performRevive will delete the file and trigger reload().
+        let ghostCwd = "/nonexistent/path/that/no/process/has/\(UUID().uuidString)"
+        writeSessionWithTTY(id: "ghost-revive", cwd: ghostCwd, state: "active", tty: nil)
+
+        // Normal session with a TTY that is also definitely not active.
+        writeSessionWithTTY(id: "normal-revive", cwd: "/tmp/proj", state: "active", tty: "/dev/ttys999")
+
+        let store = StateStore(sessionsDirectory: tempDir, autoReload: true)
+        waitForMainQueue()
+        // Both sessions are present before revive.
+        XCTAssertEqual(store.sessions.count, 2)
+
+        let expectation = self.expectation(description: "reviveSessions background dispatch completes")
+        // Allow enough time for the background queue + main-queue reload round-trip.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            expectation.fulfill()
+        }
+
+        store.reviveSessions()
+        wait(for: [expectation], timeout: 5.0)
+
+        // After revive: both dead sessions should have been cleaned up.
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: tempDir.appendingPathComponent("ghost-revive.json").path),
+            "Ghost session with inactive cwd should be deleted by reviveSessions"
+        )
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: tempDir.appendingPathComponent("normal-revive.json").path),
+            "Session with inactive TTY should be deleted by reviveSessions"
+        )
+        // sessions should have been reloaded (empty or smaller count)
+        XCTAssertLessThan(store.sessions.count, 2,
+            "store.sessions should reflect reload after reviveSessions")
     }
 }

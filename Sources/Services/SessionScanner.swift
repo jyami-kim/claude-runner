@@ -11,11 +11,24 @@ enum SessionScanner {
         let terminalBundleId: String
     }
 
-    /// Returns TTYs where a Claude process is actually running.
+    /// Returns cwds of all running claude processes (comm == "claude").
+    static func findActiveClaudeCwds() -> Set<String> {
+        let pids = findClaudePids()
+        var cwds = Set<String>()
+        for pid in pids {
+            guard isClaudeProcess(pid: pid) else { continue }
+            let cwd = getCwd(pid: pid)
+            if !cwd.isEmpty { cwds.insert(canonicalizeCwd(cwd)) }
+        }
+        return cwds
+    }
+
+    /// Returns TTYs where a Claude process (comm == "claude") is actually running.
     static func findActiveClaudeTTYs() -> Set<String> {
         let claudePids = findClaudePids()
         var ttys = Set<String>()
         for pid in claudePids {
+            guard isClaudeProcess(pid: pid) else { continue }
             guard let info = getProcessInfo(pid: pid) else { continue }
             let tty = resolveTmuxClientTTY(paneTTY: info.tty) ?? info.tty
             if !tty.isEmpty { ttys.insert(tty) }
@@ -34,6 +47,7 @@ enum SessionScanner {
         var results: [DiscoveredSession] = []
 
         for pid in claudePids {
+            guard isClaudeProcess(pid: pid) else { continue }
             guard let info = getProcessInfo(pid: pid) else { continue }
             // Resolve tmux pane TTY → real terminal client TTY
             let tty = resolveTmuxClientTTY(paneTTY: info.tty) ?? info.tty
@@ -71,6 +85,30 @@ enum SessionScanner {
     static func parseClaudePids(from output: String) -> [Int] {
         output.split(separator: "\n")
             .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+    }
+
+    /// True iff the process at `pid` has comm == "claude" (basename).
+    ///
+    /// Mirrors the validation in `claude-runner-hook.sh` (basename check) to avoid
+    /// false-positives from `pgrep -f 'claude'` matching unrelated processes such as
+    /// `claude-runner`, hook scripts, or editors launched from a claude-runner directory.
+    static func isClaudeProcess(pid: Int) -> Bool {
+        let comm = runShell("ps -p \(pid) -o comm= 2>/dev/null")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let base = (comm as NSString).lastPathComponent
+        return base == "claude"
+    }
+
+    /// Canonicalize a path for set-based cwd comparison.
+    ///
+    /// Uses `realpath(3)` to resolve symlinks (e.g. /tmp → /private/tmp) so that
+    /// paths stored by the hook script and paths returned by lsof compare reliably.
+    /// Falls back to the original path when `realpath` fails (e.g. path doesn't exist).
+    static func canonicalizeCwd(_ path: String) -> String {
+        guard !path.isEmpty else { return path }
+        var buf = [CChar](repeating: 0, count: Int(PATH_MAX))
+        guard realpath(path, &buf) != nil else { return path }
+        return String(cString: buf)
     }
 
     /// Get TTY for a process.
