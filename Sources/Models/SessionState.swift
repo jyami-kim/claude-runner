@@ -235,53 +235,103 @@ final class StateStore: ObservableObject {
     }
 
     /// Scan for orphaned Claude processes and create synthetic session files.
-    /// Also cleans up dead sessions (active/permission state but no running process).
+    /// Also cleans up dead sessions (active/permission state but no running process),
+    /// including ghost sessions with empty TTY matched via cwd fallback.
     func reviveSessions() {
+        // Capture sessions snapshot on the main queue so _performRevive never reads
+        // self.sessions from a background thread (data race prevention).
         let existingSessions = sessions
         let existingTTYs = Set(existingSessions.compactMap { $0.tty })
         let dir = sessionsDirectory
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let activeTTYs = SessionScanner.findActiveClaudeTTYs()
-
-            // Clean up dead sessions: any session whose TTY has no running claude process
-            let fm = FileManager.default
-            for session in existingSessions {
-                guard let tty = session.tty, !tty.isEmpty else { continue }
-                if !activeTTYs.contains(tty) {
-                    let file = dir.appendingPathComponent("\(session.sessionId).json")
-                    try? fm.removeItem(at: file)
-                }
-            }
-
-            // Discover orphaned processes not tracked by session files
+            let activeCwds = SessionScanner.findActiveClaudeCwds()
             let orphaned = SessionScanner.scanForOrphanedSessions(existingTTYs: existingTTYs)
+            self?._performRevive(
+                existingSessions: existingSessions,
+                activeTTYs: activeTTYs,
+                activeCwds: activeCwds,
+                orphaned: orphaned,
+                dir: dir
+            )
+        }
+    }
 
-            let formatter = ISO8601DateFormatter()
-            let now = formatter.string(from: Date())
+    /// Internal — exposed for tests; do not call from production code.
+    ///
+    /// Core revive logic separated for testability. Accepts a pre-captured sessions
+    /// snapshot to avoid background reads of the `@Published` `sessions` property.
+    /// Cleans up dead sessions and writes synthetic files for orphaned processes.
+    /// Dispatches a main-queue `reload()` on completion.
+    func _performRevive(
+        existingSessions: [SessionEntry],
+        activeTTYs: Set<String>,
+        activeCwds: Set<String>,
+        orphaned: [SessionScanner.DiscoveredSession],
+        dir: URL
+    ) {
+        let fm = FileManager.default
 
-            for session in orphaned {
-                let sessionId = "revived-\(session.tty.replacingOccurrences(of: "/", with: "-"))"
-                let dict: [String: Any] = [
-                    "session_id": sessionId,
-                    "cwd": session.cwd,
-                    "state": "waiting",
-                    "updated_at": now,
-                    "started_at": now,
-                    "terminal_bundle_id": session.terminalBundleId,
-                    "tty": session.tty,
-                    "last_message": "",
-                    "current_activity": "",
-                ]
-
-                guard let data = try? JSONSerialization.data(withJSONObject: dict) else { continue }
-                let file = dir.appendingPathComponent("\(sessionId).json")
-                try? data.write(to: file, options: .atomic)
+        // Clean up dead sessions.
+        // - If a session has a TTY: dead when TTY not in activeTTYs.
+        // - If a session has no TTY (ghost): dead when canonicalized cwd not in activeCwds.
+        //   activeCwds is already canonicalized by SessionScanner.findActiveClaudeCwds().
+        for session in existingSessions {
+            let tty = session.tty ?? ""
+            let isDead: Bool
+            if !tty.isEmpty {
+                isDead = !activeTTYs.contains(tty)
+            } else {
+                // Empty-TTY fallback: alive if any running claude shares the same cwd.
+                // Canonicalize session.cwd to match the canonicalized activeCwds set.
+                isDead = !activeCwds.contains(SessionScanner.canonicalizeCwd(session.cwd))
             }
-
-            DispatchQueue.main.async {
-                self?.reload()
+            if isDead {
+                let file = dir.appendingPathComponent("\(session.sessionId).json")
+                try? fm.removeItem(at: file)
             }
+        }
+
+        // Clean up stale .tmp.* leftover files (>24h old) from hook script interruptions.
+        let tmpCandidates = (try? fm.contentsOfDirectory(
+            at: dir,
+            includingPropertiesForKeys: [.contentModificationDateKey],
+            options: []
+        )) ?? []
+        for file in tmpCandidates where file.lastPathComponent.hasPrefix(".tmp.") {
+            if let attrs = try? file.resourceValues(forKeys: [.contentModificationDateKey]),
+               let mtime = attrs.contentModificationDate,
+               Date().timeIntervalSince(mtime) > 86400 {
+                try? fm.removeItem(at: file)
+            }
+        }
+
+        // Discover orphaned processes not tracked by session files.
+        let formatter = ISO8601DateFormatter()
+        let now = formatter.string(from: Date())
+
+        for session in orphaned {
+            let sessionId = "revived-\(session.tty.replacingOccurrences(of: "/", with: "-"))"
+            let dict: [String: Any] = [
+                "session_id": sessionId,
+                "cwd": session.cwd,
+                "state": "waiting",
+                "updated_at": now,
+                "started_at": now,
+                "terminal_bundle_id": session.terminalBundleId,
+                "tty": session.tty,
+                "last_message": "",
+                "current_activity": "",
+            ]
+
+            guard let data = try? JSONSerialization.data(withJSONObject: dict) else { continue }
+            let file = dir.appendingPathComponent("\(sessionId).json")
+            try? data.write(to: file, options: .atomic)
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            self?.reload()
         }
     }
 
